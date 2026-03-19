@@ -398,9 +398,34 @@
     }
     .ticket-display.has-tickets { background: var(--sun); animation: ticketGlow 1.5s ease infinite; }
     @keyframes ticketGlow { 0%,100%{box-shadow:4px 4px 0 var(--navy)} 50%{box-shadow:4px 4px 0 var(--navy),0 0 20px rgba(255,217,61,.8)} }
-    .gacha-ball-big { font-size:clamp(90px,18vw,130px); line-height:1; filter:drop-shadow(4px 4px 0 var(--navy)); }
-    .gacha-ball-big.pulling { animation:ballPull .45s ease infinite; }
-    @keyframes ballPull { 0%,100%{transform:translateY(0) scale(1) rotate(0)} 50%{transform:translateY(-22px) scale(1.14) rotate(20deg)} }
+    .gacha-ball-big { font-size:clamp(90px,18vw,130px); line-height:1; filter:drop-shadow(4px 4px 0 var(--navy)); transition:filter .3s; }
+    /* 3フェーズ演出 */
+    .gacha-ball-big.pulling-slow { animation:ballSlow .7s ease-in-out infinite; }
+    @keyframes ballSlow { 0%,100%{transform:translateY(0) scale(1) rotate(-4deg)} 50%{transform:translateY(-14px) scale(1.07) rotate(4deg)} }
+    .gacha-ball-big.pulling-fast { animation:ballFast .26s ease-in-out infinite; filter:drop-shadow(4px 4px 0 var(--navy)) drop-shadow(0 0 24px rgba(255,217,61,.9)); }
+    @keyframes ballFast { 0%,100%{transform:translateY(0) rotate(-12deg) scale(1.06)} 50%{transform:translateY(-22px) rotate(12deg) scale(1.2)} }
+    .gacha-ball-big.pulling-burst { animation:ballBurst .15s ease-in-out infinite; filter:drop-shadow(0 0 0 transparent) drop-shadow(0 0 50px #fff) brightness(1.4); }
+    @keyframes ballBurst { 0%,100%{transform:scale(1.1)} 50%{transform:scale(1.55) rotate(22deg)} }
+    /* フラッシュオーバーレイ */
+    .gacha-flash { display:none; position:fixed; inset:0; z-index:450; pointer-events:none; background:white; }
+    .gacha-flash.show { display:block; animation:flashPop .55s ease forwards; }
+    @keyframes flashPop { 0%{opacity:0} 22%{opacity:1} 100%{opacity:0} }
+    /* スパークル */
+    .gacha-sparkle { position:fixed; pointer-events:none; z-index:440; animation:sparkleFly var(--dur,.8s) ease forwards; }
+    @keyframes sparkleFly { 0%{transform:translate(0,0) scale(0) rotate(0);opacity:1} 100%{transform:translate(var(--dx,0px),var(--dy,-70px)) scale(1.6) rotate(200deg);opacity:0} }
+    /* ミステリーカード */
+    .result-card.r-mystery { background:var(--navy) !important; }
+    .result-card.r-mystery .result-stars-row,
+    .result-card.r-mystery .result-item-name,
+    .result-card.r-mystery .result-rarity-name { color:rgba(255,255,255,.5) !important; }
+    .result-card.shaking { animation:cardShk .22s ease; }
+    @keyframes cardShk { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1) rotate(3deg)} }
+    .result-card.revealed { animation:resultReveal .45s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes resultReveal { 0%{transform:scale(.6) rotate(-6deg);opacity:.3} 100%{transform:scale(1) rotate(0);opacity:1} }
+    /* レアリティ背景 */
+    .result-overlay.r5-bg { background:radial-gradient(circle at 50% 40%, rgba(255,217,61,.35) 0%, rgba(30,27,60,.95) 65%); }
+    .result-overlay.r4-bg { background:radial-gradient(circle at 50% 40%, rgba(155,127,234,.35) 0%, rgba(30,27,60,.95) 65%); }
+    .result-overlay.r3-bg { background:radial-gradient(circle at 50% 40%, rgba(77,201,194,.3) 0%, rgba(30,27,60,.95) 65%); }
     .rate-card {
       background: white; border-radius: 20px; padding: 14px 18px; width: 100%;
       border: 3px solid var(--navy); box-shadow: 4px 4px 0 var(--navy);
@@ -547,6 +572,9 @@
 <body>
 
 <div id="confetti-layer"></div>
+
+<!-- ガチャフラッシュ -->
+<div id="gacha-flash" class="gacha-flash"></div>
 
 <!-- ガチャ結果オーバーレイ -->
 <div class="result-overlay" id="result-overlay">
@@ -698,7 +726,7 @@
 <div id="collection-screen" class="screen">
   <div class="coll-header">
     <div class="title-big" style="font-size:clamp(1.3rem,3.5vw,2rem)">📚 コレクション</div>
-    <div class="coll-stats" id="coll-stats">0 / 23</div>
+    <div class="coll-stats" id="coll-stats">0 / 46</div>
   </div>
   <div class="coll-filter">
     <button class="coll-filter-btn active" onclick="filterColl(0)">すべて</button>
@@ -881,34 +909,57 @@ const setXP = v  => DATA.setXP(v);
 
 /* ═══ GACHA ITEMS ═══ */
 const GACHA_ITEMS = [
-  // ★★★★★ レジェンド (3%)
+  // ★★★★★ レジェンド (3%) — 6種
   { id:'dragon',   emoji:'🐉', name:'ドラゴン',     rarity:5, stars:'★★★★★' },
   { id:'unicorn',  emoji:'🦄', name:'ユニコーン',   rarity:5, stars:'★★★★★' },
   { id:'alien',    emoji:'👾', name:'エイリアン',   rarity:5, stars:'★★★★★' },
-  // ★★★★ スーパー (10%)
+  { id:'mermaid',  emoji:'🧜', name:'にんぎょ',     rarity:5, stars:'★★★★★' },
+  { id:'rainbow',  emoji:'🌈', name:'にじ',         rarity:5, stars:'★★★★★' },
+  { id:'fairy',    emoji:'🧚', name:'ようせい',     rarity:5, stars:'★★★★★' },
+  // ★★★★ スーパー (10%) — 8種
   { id:'lion',     emoji:'🦁', name:'らいおん',     rarity:4, stars:'★★★★☆' },
   { id:'tiger',    emoji:'🐯', name:'とら',         rarity:4, stars:'★★★★☆' },
   { id:'wolf',     emoji:'🐺', name:'おおかみ',     rarity:4, stars:'★★★★☆' },
   { id:'trex',     emoji:'🦖', name:'ティラノ',     rarity:4, stars:'★★★★☆' },
-  // ★★★ レア (22%)
+  { id:'shark',    emoji:'🦈', name:'さめ',         rarity:4, stars:'★★★★☆' },
+  { id:'eagle',    emoji:'🦅', name:'わし',         rarity:4, stars:'★★★★☆' },
+  { id:'croc',     emoji:'🐊', name:'わに',         rarity:4, stars:'★★★★☆' },
+  { id:'gorilla',  emoji:'🦍', name:'ゴリラ',       rarity:4, stars:'★★★★☆' },
+  // ★★★ レア (22%) — 10種
   { id:'elephant', emoji:'🐘', name:'ぞう',         rarity:3, stars:'★★★☆☆' },
   { id:'penguin',  emoji:'🐧', name:'ぺんぎん',     rarity:3, stars:'★★★☆☆' },
   { id:'owl',      emoji:'🦉', name:'ふくろう',     rarity:3, stars:'★★★☆☆' },
   { id:'koala',    emoji:'🐨', name:'こあら',       rarity:3, stars:'★★★☆☆' },
   { id:'panda',    emoji:'🐼', name:'ぱんだ',       rarity:3, stars:'★★★☆☆' },
-  // ★★ ノーマル (30%)
+  { id:'giraffe',  emoji:'🦒', name:'きりん',       rarity:3, stars:'★★★☆☆' },
+  { id:'zebra',    emoji:'🦓', name:'しまうま',     rarity:3, stars:'★★★☆☆' },
+  { id:'whale',    emoji:'🐋', name:'くじら',       rarity:3, stars:'★★★☆☆' },
+  { id:'parrot',   emoji:'🦜', name:'おうむ',       rarity:3, stars:'★★★☆☆' },
+  { id:'dolphin',  emoji:'🐬', name:'いるか',       rarity:3, stars:'★★★☆☆' },
+  // ★★ ノーマル (30%) — 12種
   { id:'rabbit',   emoji:'🐰', name:'うさぎ',       rarity:2, stars:'★★☆☆☆' },
   { id:'bear',     emoji:'🐻', name:'くま',         rarity:2, stars:'★★☆☆☆' },
   { id:'fox',      emoji:'🦊', name:'きつね',       rarity:2, stars:'★★☆☆☆' },
   { id:'frog',     emoji:'🐸', name:'かえる',       rarity:2, stars:'★★☆☆☆' },
   { id:'duck',     emoji:'🦆', name:'あひる',       rarity:2, stars:'★★☆☆☆' },
   { id:'hamster',  emoji:'🐹', name:'はむすたー',   rarity:2, stars:'★★☆☆☆' },
-  // ★ コモン (35%)
+  { id:'sheep',    emoji:'🐑', name:'ひつじ',       rarity:2, stars:'★★☆☆☆' },
+  { id:'pig',      emoji:'🐷', name:'ぶた',         rarity:2, stars:'★★☆☆☆' },
+  { id:'cow',      emoji:'🐮', name:'うし',         rarity:2, stars:'★★☆☆☆' },
+  { id:'raccoon',  emoji:'🦝', name:'たぬき',       rarity:2, stars:'★★☆☆☆' },
+  { id:'squirrel', emoji:'🐿️', name:'りす',         rarity:2, stars:'★★☆☆☆' },
+  { id:'hedgehog', emoji:'🦔', name:'はりねずみ',   rarity:2, stars:'★★☆☆☆' },
+  // ★ コモン (35%) — 10種
   { id:'cat',      emoji:'🐱', name:'ねこ',         rarity:1, stars:'★☆☆☆☆' },
   { id:'dog',      emoji:'🐶', name:'いぬ',         rarity:1, stars:'★☆☆☆☆' },
   { id:'chick',    emoji:'🐥', name:'ひよこ',       rarity:1, stars:'★☆☆☆☆' },
   { id:'fish',     emoji:'🐟', name:'さかな',       rarity:1, stars:'★☆☆☆☆' },
   { id:'star',     emoji:'⭐',  name:'ほし',         rarity:1, stars:'★☆☆☆☆' },
+  { id:'bird',     emoji:'🐦', name:'とり',         rarity:1, stars:'★☆☆☆☆' },
+  { id:'snail',    emoji:'🐌', name:'かたつむり',   rarity:1, stars:'★☆☆☆☆' },
+  { id:'turtle',   emoji:'🐢', name:'かめ',         rarity:1, stars:'★☆☆☆☆' },
+  { id:'mushroom', emoji:'🍄', name:'きのこ',       rarity:1, stars:'★☆☆☆☆' },
+  { id:'flower',   emoji:'🌸', name:'はな',         rarity:1, stars:'★☆☆☆☆' },
 ];
 
 /* ═══ TIMER ═══ */
@@ -1446,18 +1497,71 @@ function onGameComplete() {
 /* ═══ GACHA FUNCTIONS ═══ */
 let collFilter = 0;
 
-function sfxGacha() {
+/* ── ガチャ効果音 (3フェーズ) ── */
+function sfxGachaPhase1() { // 神秘的な低音
   if (!audioCtx) return;
-  const notes = [262, 330, 392, 494, 587, 698, 880, 1047];
-  notes.forEach((f, i) => {
+  [130, 164, 196, 220, 196, 164].forEach((f, i) => {
+    const t = audioCtx.currentTime + i * 0.16;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.07, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.start(t); o.stop(t + 0.25);
+  });
+}
+function sfxGachaPhase2() { // 興奮する上昇音
+  if (!audioCtx) return;
+  [262, 330, 392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => {
+    const t = audioCtx.currentTime + i * 0.09;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+    o.start(t); o.stop(t + 0.16);
+  });
+}
+function sfxGachaPhase3() { // ドラムロール爆発
+  if (!audioCtx) return;
+  for (let i = 0; i < 10; i++) {
+    const t = audioCtx.currentTime + i * 0.04;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sawtooth'; o.frequency.value = 600 + i * 120;
+    g.gain.setValueAtTime(0.1 + i * 0.012, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    o.start(t); o.stop(t + 0.07);
+  }
+}
+function sfxReveal(rarity) { // レアリティ別登場音
+  if (!audioCtx) return;
+  if (rarity >= 5) { sfxEnd(); return; }
+  const freqs = rarity >= 4 ? [523,659,784,1047,1319] : rarity >= 3 ? [659,784,1047,1319] : [880,1047];
+  freqs.forEach((f, i) => {
     const t = audioCtx.currentTime + i * 0.1;
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
     o.type = 'triangle'; o.frequency.value = f;
-    g.gain.setValueAtTime(0.14, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-    o.start(t); o.stop(t + 0.18);
+    g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.22);
   });
+}
+
+function spawnSparkles() {
+  const icons = ['✨','⭐','💫','🌟','⚡','🎆'];
+  for (let i = 0; i < 10; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div'); el.className = 'gacha-sparkle';
+      el.textContent = icons[Math.floor(Math.random() * icons.length)];
+      el.style.fontSize = (1.2 + Math.random() * 1.2) + 'rem';
+      el.style.left = (15 + Math.random() * 70) + '%';
+      el.style.top  = (25 + Math.random() * 35) + '%';
+      const angle = (Math.random() - 0.5) * 140;
+      el.style.setProperty('--dx', Math.round(Math.sin(angle * Math.PI/180) * 80) + 'px');
+      el.style.setProperty('--dy', (-50 - Math.random() * 80) + 'px');
+      el.style.setProperty('--dur', (0.7 + Math.random() * 0.5) + 's');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1400);
+    }, i * 70);
+  }
 }
 
 function rollGacha() {
@@ -1476,31 +1580,77 @@ function doPull() {
   if (!DATA.useTicket()) return;
   const ball = document.getElementById('gacha-ball');
   const pullBtn = document.getElementById('gacha-pull-btn');
-  ball.classList.add('pulling');
   pullBtn.disabled = true;
+  updateTicketUI();
   initAudio();
-  sfxGacha();
+
+  // Phase 1: ゆっくり揺れる（神秘的）
+  ball.className = 'gacha-ball-big pulling-slow';
+  sfxGachaPhase1();
+
+  // Phase 2: 激しく振動（興奮）
   setTimeout(() => {
-    ball.classList.remove('pulling');
+    ball.className = 'gacha-ball-big pulling-fast';
+    sfxGachaPhase2();
+    spawnSparkles();
+  }, 950);
+
+  // Phase 3: 爆発直前（バースト）
+  setTimeout(() => {
+    ball.className = 'gacha-ball-big pulling-burst';
+    sfxGachaPhase3();
+  }, 1900);
+
+  // フラッシュ！
+  setTimeout(() => {
+    const flash = document.getElementById('gacha-flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 650);
+  }, 2200);
+
+  // 結果表示（ミステリー状態で先に出す）
+  setTimeout(() => {
+    ball.className = 'gacha-ball-big';
     const item = rollGacha();
     const isNew = DATA.addToCollection(item.id);
     showResult(item, isNew);
     updateTicketUI();
-  }, 900);
+  }, 2450);
 }
 
 function showResult(item, isNew) {
   const rarityNames = ['','コモン','ノーマル','レア','スーパー','レジェンド'];
-  document.getElementById('result-emoji').textContent = item.emoji;
-  document.getElementById('result-stars').textContent = item.stars;
-  document.getElementById('result-name').textContent = item.name;
-  document.getElementById('result-rarity').textContent = rarityNames[item.rarity];
-  const badge = document.getElementById('result-new-badge');
-  badge.style.display = isNew ? '' : 'none';
-  document.getElementById('result-card').className = `result-card r${item.rarity}`;
-  document.getElementById('result-overlay').classList.add('show');
-  confetti(item.rarity * 8);
-  if (item.rarity >= 4) setTimeout(() => confetti(item.rarity * 10), 400);
+  const overlay = document.getElementById('result-overlay');
+  const card    = document.getElementById('result-card');
+  const emojiEl = document.getElementById('result-emoji');
+  const starsEl = document.getElementById('result-stars');
+  const nameEl  = document.getElementById('result-name');
+  const rarEl   = document.getElementById('result-rarity');
+  const badge   = document.getElementById('result-new-badge');
+
+  // ミステリーカードで先に表示
+  card.className = 'result-card r-mystery';
+  emojiEl.textContent = '❓'; starsEl.textContent = '？？？？？';
+  nameEl.textContent = '？？？？'; rarEl.textContent = '...';
+  badge.style.display = 'none';
+  overlay.className = 'result-overlay show';
+
+  // 800ms後に開封演出
+  setTimeout(() => {
+    card.classList.add('shaking');
+    setTimeout(() => {
+      card.className = `result-card r${item.rarity} revealed`;
+      overlay.className = `result-overlay show${item.rarity >= 3 ? ' r'+item.rarity+'-bg' : ''}`;
+      emojiEl.textContent = item.emoji;
+      starsEl.textContent = item.stars;
+      nameEl.textContent  = item.name;
+      rarEl.textContent   = rarityNames[item.rarity];
+      badge.style.display = isNew ? '' : 'none';
+      sfxReveal(item.rarity);
+      confetti(item.rarity * 10);
+      if (item.rarity >= 4) { setTimeout(() => confetti(item.rarity * 14), 350); setTimeout(() => confetti(item.rarity * 10), 700); }
+    }, 200);
+  }, 850);
 }
 
 function closeResult() {
