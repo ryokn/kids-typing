@@ -64,6 +64,12 @@
     .btn:hover  { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--navy); }
     .btn:active { transform: translate(4px,4px); box-shadow: 0 0 0 var(--navy); }
 
+    /* ── キーボードフォーカス（Tab移動時のみ表示） ── */
+    button:focus-visible {
+      outline: 4px solid var(--sun);
+      outline-offset: 3px;
+    }
+
     .btn-play {
       background: var(--green);
       box-shadow: 4px 4px 0 var(--green-d), 4px 4px 0 var(--navy);
@@ -1881,7 +1887,12 @@ function quitToLevelSelect() {
 /* ═══ KEY EVENT ═══ */
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.altKey||e.metaKey||e.repeat) return;
-  if(/^[a-zA-Z]$/.test(e.key)) onInput(e.key);
+  const gameActive = document.getElementById('game-screen').classList.contains('active');
+  if(gameActive && /^[a-zA-Z]$/.test(e.key)) {
+    // フォーカス中のボタンがあればタイピング入力を無視
+    if(document.activeElement && document.activeElement.tagName==='BUTTON') return;
+    onInput(e.key);
+  }
 });
 
 /* ═══ INIT ═══ */
