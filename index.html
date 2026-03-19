@@ -261,6 +261,11 @@
       color: var(--navy);
       box-shadow: 2px 2px 0 var(--navy);
     }
+    .char-hira.compound {
+      font-size: clamp(1rem,3.2vw,1.8rem);
+      width: clamp(58px,10vw,84px);
+      letter-spacing: -1px;
+    }
     .char-hira.active {
       background: var(--sun);
       transform: scale(1.14) translateY(-6px);
@@ -1126,26 +1131,26 @@ function showScreen(id) {
 }
 
 /* ═══ BGM ═══ */
-// レベルごとのBPM（高レベルほど速くなる）
-const LEVEL_BPM = { 1:100, 2:112, 3:126, 4:140, 5:156 };
+// レベルごとのBPM
+const LEVEL_BPM = { 1:96, 2:112, 3:126, 4:142, 5:160 };
 
 const BGM = (() => {
   let playing = false, muted = false;
   let masterGain = null, nextLoopTime = 0, loopId = null;
-  let _bpm = 126, _e, _q, _h;
+  let _bpm = 126, _e, _q, _h, _w;
   let _noiseBuffer = null;
+  let _currentLevel = 1;
 
   const F = {
-    C3:130.8, D3:146.8, E3:164.8, F3:174.6, G3:196.0, A3:220.0,
-    C4:261.6, D4:293.7, E4:329.6, F4:349.2, G4:392.0, A4:440.0,
+    C3:130.8, D3:146.8, E3:164.8, F3:174.6, G3:196.0, A3:220.0, B3:246.9,
+    C4:261.6, D4:293.7, E4:329.6, F4:349.2, G4:392.0, A4:440.0, B4:493.9,
     C5:523.3, D5:587.3, E5:659.3, F5:698.5, G5:784.0, A5:880.0,
   };
 
   function calc(bpm) {
-    _bpm = bpm; _e = 60/(bpm*2); _q = _e*2; _h = _q*2;
+    _bpm = bpm; _e = 60/(bpm*2); _q = _e*2; _h = _q*2; _w = _h*2;
   }
 
-  // ノイズバッファ（ハイハット用）を一度だけ生成
   function noiseBuf() {
     if (_noiseBuffer) return _noiseBuffer;
     _noiseBuffer = audioCtx.createBuffer(1, ~~(audioCtx.sampleRate*.06), audioCtx.sampleRate);
@@ -1178,23 +1183,90 @@ const BGM = (() => {
     o.start(when); o.stop(when + 0.22);
   }
 
-  function hat(when) {
+  function hat(when, vol=0.028) {
     if (!audioCtx || !masterGain) return;
     const src = audioCtx.createBufferSource();
     src.buffer = noiseBuf();
     const fl = audioCtx.createBiquadFilter(), g = audioCtx.createGain();
     fl.type = 'highpass'; fl.frequency.value = 8000;
     src.connect(fl); fl.connect(g); g.connect(masterGain);
-    g.gain.setValueAtTime(0.028, when);
+    g.gain.setValueAtTime(vol, when);
     g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
     src.start(when);
   }
 
-  function scheduleLoop(start) {
-    const e=_e, q=_q, h=_h;
+  function snare(when) {
+    if (!audioCtx || !masterGain) return;
+    const src = audioCtx.createBufferSource();
+    src.buffer = noiseBuf();
+    const fl = audioCtx.createBiquadFilter(), g = audioCtx.createGain();
+    fl.type = 'bandpass'; fl.frequency.value = 2800; fl.Q.value = 0.6;
+    src.connect(fl); fl.connect(g); g.connect(masterGain);
+    g.gain.setValueAtTime(0.09, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.14);
+    src.start(when);
+  }
 
-    // ── メロディ (三角波・柔らかい音色) ──
-    // Cメジャー 4小節ループ
+  // Lv1: きらきら星 — ゆっくり、やさしい (BPM 96)
+  function scheduleLoop1(start) {
+    const q=_q, h=_h, w=_w;
+    const mel = [
+      [F.C5,q],[F.C5,q],[F.G5,q],[F.G5,q],
+      [F.A5,q],[F.A5,q],[F.G5,h],
+      [F.F5,q],[F.F5,q],[F.E5,q],[F.E5,q],
+      [F.D5,q],[F.D5,q],[F.C5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { note(f, d*.88, 'triangle', 0.075, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,h],[F.G3,h], [F.C3,h],[F.G3,h],
+      [F.F3,h],[F.G3,h], [F.C3,w],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.65, 'sine', 0.05, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      kick(b0); kick(b0 + q*2);
+    }
+    return loopDur;
+  }
+
+  // Lv2: たのしいマーチ — はずむ、明るい (BPM 112)
+  function scheduleLoop2(start) {
+    const q=_q, h=_h, w=_w;
+    const mel = [
+      [F.E5,q],[F.D5,q],[F.C5,q],[F.D5,q],
+      [F.E5,q],[F.E5,q],[F.E5,h],
+      [F.D5,q],[F.D5,q],[F.D5,h],
+      [F.E5,q],[F.G5,q],[F.G5,h],
+      [F.E5,q],[F.D5,q],[F.C5,q],[F.D5,q],
+      [F.E5,q],[F.E5,q],[F.E5,q],[F.E5,q],
+      [F.D5,q],[F.D5,q],[F.E5,q],[F.D5,q],
+      [F.C5,w],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { note(f, d*.82, 'triangle', 0.082, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,q],[F.G3,q],[F.C3,q],[F.G3,q], [F.C3,q],[F.E3,q],[F.G3,h],
+      [F.G3,q],[F.D3,q],[F.G3,q],[F.D3,q], [F.G3,q],[F.D3,q],[F.G3,h],
+      [F.C3,q],[F.G3,q],[F.C3,q],[F.G3,q], [F.C3,q],[F.E3,q],[F.G3,h],
+      [F.F3,q],[F.C3,q],[F.G3,q],[F.D3,q], [F.C3,w],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.65, 'sine', 0.058, t); t += d; });
+    for (let bar=0; bar<8; bar++) {
+      const b0 = start + bar * q * 4;
+      kick(b0); kick(b0 + q*2);
+      for (let b=0; b<4; b++) hat(b0 + b*q, 0.022);
+    }
+    return loopDur;
+  }
+
+  // Lv3: ぼうけん — わくわく冒険 (BPM 126)
+  function scheduleLoop3(start) {
+    const e=_e, q=_q, h=_h;
     const mel = [
       [F.E5,e],[F.G5,e],[F.E5,e],[F.C5,e], [F.D5,e],[F.E5,e],[F.D5,e],[0,  e],
       [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.D5,q],         [F.C5,q],
@@ -1204,8 +1276,6 @@ const BGM = (() => {
     let t = start;
     mel.forEach(([f,d]) => { note(f, d*.82, 'triangle', 0.085, t); t += d; });
     const loopDur = t - start;
-
-    // ── ベース (サイン波) ──
     const bass = [
       [F.C3,q],[F.G3,q],[F.C3,q],[F.G3,q],
       [F.G3,q],[F.D3,q],[F.G3,q],[F.D3,q],
@@ -1214,19 +1284,81 @@ const BGM = (() => {
     ];
     t = start;
     bass.forEach(([f,d]) => { note(f, d*.68, 'sine', 0.065, t); t += d; });
-
-    // ── リズム (4小節分) ──
     for (let bar=0; bar<4; bar++) {
       const b0 = start + bar * q * 4;
-      kick(b0);          // 1拍目キック
-      kick(b0 + q*2);    // 3拍目キック
+      kick(b0); kick(b0 + q*2);
       for (let beat=0; beat<4; beat++) {
-        hat(b0 + beat*q);        // 表拍ハイハット
-        hat(b0 + beat*q + e);    // 裏拍ハイハット
+        hat(b0 + beat*q); hat(b0 + beat*q + e);
       }
     }
-
     return loopDur;
+  }
+
+  // Lv4: ダッシュ — アーケード疾走 (BPM 142)
+  function scheduleLoop4(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.G5,e],[F.G5,e],[F.A5,e],[F.G5,e], [F.E5,e],[F.D5,e],[F.C5,e],[F.D5,e],
+      [F.E5,e],[F.G5,e],[F.A5,q],           [F.G5,e],[F.E5,e],[F.D5,q],
+      [F.A5,e],[F.A5,e],[F.G5,e],[F.A5,e], [F.C5,e],[F.D5,e],[F.E5,e],[F.G5,e],
+      [F.A5,q],[F.G5,e],[F.E5,e],           [F.G5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.75, 'square', 0.052, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[0,e],[F.C3,e],[0,e],[F.C3,e],[0,e],[F.G3,e],[0,e],
+      [F.C3,e],[0,e],[F.G3,e],[0,e],[F.C3,q],[0,q],
+      [F.A3,e],[0,e],[F.A3,e],[0,e],[F.A3,e],[0,e],[F.E3,e],[0,e],
+      [F.G3,e],[0,e],[F.D3,e],[0,e],[F.G3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { if(f) note(f, d*.55, 'sawtooth', 0.068, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0 + beat*q);
+        if (beat===1||beat===3) snare(b0 + beat*q);
+        hat(b0 + beat*q, 0.020); hat(b0 + beat*q + e, 0.012);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv5: チャンピオン — 熱いボス戦 (BPM 160)
+  function scheduleLoop5(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.G5,e],[F.A5,e],[F.C5,e],[F.D5,e],
+      [F.E5,e],[F.G5,e],[F.A5,q],           [F.G5,e],[F.E5,e],[F.D5,q],
+      [F.C5,e],[F.D5,e],[F.E5,e],[F.G5,e], [F.A5,e],[F.G5,e],[F.E5,e],[F.D5,e],
+      [F.G5,h],                              [F.D5,e],[F.E5,e],[F.G5,e],[F.A5,e],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { note(f, d*.78, 'sawtooth', 0.058, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[F.C3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.A3,e],[F.G3,e],[F.G3,e],
+      [F.C3,q],[F.E3,q],                    [F.G3,q],[F.G3,q],
+      [F.F3,e],[F.F3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.A3,e],[F.G3,e],[F.G3,e],
+      [F.C3,h],                             [F.G3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.62, 'sawtooth', 0.078, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0 + beat*q);
+        if (beat===1||beat===3) snare(b0 + beat*q);
+        hat(b0 + beat*q, 0.025); hat(b0 + beat*q + e, 0.016);
+      }
+    }
+    return loopDur;
+  }
+
+  function scheduleLoop(start) {
+    const loops = [scheduleLoop1, scheduleLoop2, scheduleLoop3, scheduleLoop4, scheduleLoop5];
+    return (loops[_currentLevel - 1] || scheduleLoop3)(start);
   }
 
   function tick() {
@@ -1238,10 +1370,11 @@ const BGM = (() => {
   }
 
   return {
-    start(bpm = 126) {
+    start(level = 1) {
       if (!audioCtx) return;
-      calc(bpm);
-      if (playing) return; // BPM変更は次のループから
+      _currentLevel = level;
+      calc(LEVEL_BPM[level] || 126);
+      if (playing) return;
       playing = true;
       masterGain = audioCtx.createGain();
       masterGain.gain.value = muted ? 0 : 0.42;
@@ -1328,7 +1461,7 @@ function startGame(lv) {
   Timer.start();
   initAudio();
   BGM.stop();
-  setTimeout(() => BGM.start(LEVEL_BPM[lv]), 100);
+  setTimeout(() => BGM.start(lv), 100);
 }
 function replayLevel() { startGame(currentLevel); }
 
@@ -1353,7 +1486,8 @@ function renderWord() {
   units.forEach((u,i)=>{
     const unit=document.createElement('div'); unit.className='char-unit';
     const hDiv=document.createElement('div');
-    hDiv.className='char-hira'+(i<uIdx?' done':i===uIdx?' active':'');
+    const compoundCls = u.kana.length > 1 ? ' compound' : '';
+    hDiv.className='char-hira'+compoundCls+(i<uIdx?' done':i===uIdx?' active':'');
     hDiv.textContent=u.kana;
     const rDiv=document.createElement('div'); rDiv.className='char-romaji';
     if (i<uIdx) {
