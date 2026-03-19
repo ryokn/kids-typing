@@ -192,6 +192,24 @@
     .rankup-banner.show { display:block; }
     @keyframes rankupPop { from{transform:scale(0) rotate(-10deg)} to{transform:scale(1) rotate(0)} }
 
+    /* タイマー */
+    .timer-row { width:100%; display:flex; align-items:center; justify-content:space-between; padding:0 2px; }
+    .timer-disp { font-size:1.15rem; font-weight:900; color:#5a3500; font-family:'Courier New',monospace; background:rgba(90,53,0,.1); padding:4px 12px; border-radius:12px; letter-spacing:1px; }
+    .best-disp  { font-size:.82rem; color:#8a6a3a; display:flex; align-items:center; gap:4px; }
+
+    /* おにモードトグル */
+    .mode-toggle-btn { width:100%; background:rgba(90,53,0,.1); border:2px solid rgba(90,53,0,.2); border-radius:30px; padding:9px 20px; font-size:1rem; font-weight:bold; color:#5a3500; cursor:pointer; transition:.2s; }
+    .mode-toggle-btn:hover { background:rgba(90,53,0,.18); }
+    .mode-toggle-btn.oni-on { background:linear-gradient(135deg,#ff4d00,#cc0000); color:white; border-color:#aa1100; box-shadow:0 4px 16px rgba(255,77,0,.4); }
+    .lc-oni { position:absolute; inset:0; border-radius:18px; border:3px solid rgba(255,80,0,.7); pointer-events:none; }
+    .lc-best { font-size:.76rem; color:rgba(255,255,255,.82); margin-top:5px; }
+
+    /* クリア画面：タイム・記録 */
+    .time-result { display:flex; align-items:center; justify-content:center; gap:10px; margin:8px 0 6px; flex-wrap:wrap; }
+    .time-taken-box { display:flex; align-items:center; gap:6px; background:rgba(90,53,0,.08); border-radius:12px; padding:6px 14px; font-weight:bold; color:#5a3500; font-size:.95rem; }
+    .record-badge { background:linear-gradient(135deg,#FFD700,#FF6B6B); color:white; font-weight:900; padding:6px 14px; border-radius:12px; font-size:.92rem; animation:rankupPop .4s cubic-bezier(.34,1.56,.64,1); }
+    .bonus-note { font-size:.8rem; color:#e05000; font-weight:bold; text-align:center; }
+
     /* Confetti */
     #confetti-layer { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999; }
     .conf { position:absolute; animation:confFall linear forwards; }
@@ -241,6 +259,7 @@
       <div class="xp-bar-label" id="ls-label">あと ? XP</div>
     </div>
   </div>
+  <button class="mode-toggle-btn" id="mode-toggle" onclick="toggleOni()">👹 おにモード OFF（キーボードひょうじあり）</button>
   <div class="level-grid" id="level-grid"></div>
   <button class="btn btn-ghost" onclick="showScreen('start-screen')">← もどる</button>
 </div>
@@ -254,6 +273,10 @@
     <div class="word-count" id="word-count">1 / 8</div>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="timer-row">
+    <span class="timer-disp">⏱ <span id="timer-disp">0:00</span></span>
+    <span class="best-disp">🏆 <span id="best-disp">--:--</span></span>
+  </div>
   <div class="xp-mini">
     <span class="xp-mini-icon" id="g-icon">🐣</span>
     <div class="xp-mini-bg"><div class="xp-mini-fill" id="g-fill" style="width:0%"></div></div>
@@ -278,6 +301,11 @@
   <div class="complete-card">
     <div class="complete-stars" id="c-stars">⭐⭐⭐⭐⭐</div>
     <div class="complete-msg"   id="c-msg">かんぺき！</div>
+    <div class="time-result">
+      <div class="time-taken-box">⏱ <span id="c-time">0:00</span></div>
+      <div class="record-badge" id="c-record" style="display:none">🏆 しんきろく！</div>
+    </div>
+    <div class="bonus-note" id="c-bonus-note" style="display:none"></div>
     <div class="xp-earned-box">
       <span class="xp-earned-num" id="c-xp-num">+0</span>
       <span class="xp-earned-lbl">XP かくとく！</span>
@@ -410,9 +438,38 @@ function getXpProg(xp) {
   return { pct:((xp-cur)/(next-cur))*100, toNext:next-xp, nextName:RANKS[idx].name };
 }
 
-/* ═══ XP STORAGE ═══ */
-const getXP = () => parseInt(localStorage.getItem('kidsXP')||'0');
-const setXP = v => localStorage.setItem('kidsXP', String(v));
+/* ═══ DATA STORAGE ═══ */
+const DATA = (() => {
+  const KEY = 'kidsTypingData';
+  const def = () => ({ xp:0, bestTimes:{} });
+  function load() {
+    try { return Object.assign(def(), JSON.parse(localStorage.getItem(KEY)||'{}')); }
+    catch { return def(); }
+  }
+  function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+  // 旧フォーマットからマイグレーション
+  const oldXP = localStorage.getItem('kidsXP');
+  if (oldXP) { const d=load(); d.xp=parseInt(oldXP)||0; save(d); localStorage.removeItem('kidsXP'); }
+  return {
+    getXP()           { return load().xp; },
+    setXP(v)          { const d=load(); d.xp=v; save(d); },
+    getBest(lv, oni)  { return load().bestTimes[lv+(oni?'_oni':'')] ?? null; },
+    setBest(lv,oni,t) { const d=load(); d.bestTimes[lv+(oni?'_oni':'')]=t; save(d); },
+  };
+})();
+const getXP = () => DATA.getXP();
+const setXP = v  => DATA.setXP(v);
+
+/* ═══ TIMER ═══ */
+const Timer = {
+  _t: null, _id: null,
+  start() { this._t = Date.now(); clearInterval(this._id); this._id = setInterval(()=>this._tick(), 200); },
+  stop()  { clearInterval(this._id); const s=this._t?(Date.now()-this._t)/1000:0; this._t=null; return s; },
+  reset() { clearInterval(this._id); this._t=null; const el=document.getElementById('timer-disp'); if(el) el.textContent='0:00'; },
+  elapsed() { return this._t?(Date.now()-this._t)/1000:0; },
+  _tick() { const el=document.getElementById('timer-disp'); if(el) el.textContent=fmtTime(this.elapsed()); },
+};
+function fmtTime(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return m+':'+String(sec).padStart(2,'0'); }
 
 /* ═══ KEYBOARD ═══ */
 const KB_ROWS = [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['Z','X','C','V','B','N','M']];
@@ -436,6 +493,7 @@ function flashKey(key,cls) {
 /* ═══ STATE ═══ */
 let currentLevel=1, wordList=[], wIdx=0, units=[], uIdx=0, rPos=0;
 let roundXP=0, wordMistakes=0, totalMistakes=0;
+let oniMode=false, gameTimeSec=0;
 let audioCtx=null;
 
 /* ═══ AUDIO ═══ */
@@ -712,13 +770,34 @@ function toggleMute() {
   document.getElementById('mute-btn').textContent = m ? '🔇' : '🔊';
 }
 
+function toggleOni() {
+  oniMode = !oniMode;
+  const btn = document.getElementById('mode-toggle');
+  btn.textContent = oniMode
+    ? '👹 おにモード ON（キーボードひょうじなし）'
+    : '👹 おにモード OFF（キーボードひょうじあり）';
+  btn.className = 'mode-toggle-btn' + (oniMode ? ' oni-on' : '');
+  buildLevelGrid();
+}
+
 /* ═══ LEVEL GRID ═══ */
 function buildLevelGrid() {
   const grid=document.getElementById('level-grid'); grid.innerHTML='';
   for (let lv=1; lv<=5; lv++) {
     const cfg=LEVEL_CFG[lv];
+    const xpBase = cfg.xp * (oniMode ? 2 : 1);
+    const xpMax  = Math.round(xpBase * 1.5);
+    const best   = DATA.getBest(lv, oniMode);
+    const bestStr = best ? `🏆 ${fmtTime(best)}` : '🏆 --:--';
     const btn=document.createElement('button'); btn.className=`level-card ${cfg.color}`;
-    btn.innerHTML=`<div class="lc-num">Lv.${lv}</div><div class="lc-name">${cfg.icon} ${cfg.name}</div><div class="lc-stars">${cfg.stars}</div><div class="lc-info">${cfg.count}もん ／ ${cfg.xp}〜${Math.round(cfg.xp*1.5)} XP／もん</div>`;
+    btn.innerHTML=`
+      <div class="lc-num">Lv.${lv}</div>
+      <div class="lc-name">${cfg.icon} ${cfg.name}${oniMode?' 👹':''}</div>
+      <div class="lc-stars">${cfg.stars}</div>
+      <div class="lc-info">${cfg.count}もん ／ ${xpBase}〜${xpMax} XP／もん</div>
+      <div class="lc-best">${bestStr}</div>
+      ${oniMode?'<div class="lc-oni"></div>':''}
+    `;
     btn.onclick=()=>startGame(lv);
     grid.appendChild(btn);
   }
@@ -733,9 +812,16 @@ function startGame(lv) {
   buildKeyboard(); updateXPBars();
   document.getElementById('stars-row').textContent='☆☆☆☆☆';
   document.getElementById('mute-btn').textContent = '🔊';
+  // おにモード: キーボード・ヒントの表示/非表示
+  document.getElementById('keyboard').style.display = oniMode ? 'none' : '';
+  // ベストタイム表示
+  const best = DATA.getBest(lv, oniMode);
+  document.getElementById('best-disp').textContent = best ? fmtTime(best) : '--:--';
+  // タイマーリセット
+  Timer.reset();
   loadWord();
   showScreen('game-screen');
-  // BGM開始（AudioContext初期化はレベルカードのクリック時 = ユーザー操作後）
+  Timer.start();
   initAudio();
   BGM.stop();
   setTimeout(() => BGM.start(LEVEL_BPM[lv]), 100);
@@ -776,7 +862,10 @@ function renderWord() {
     }
     unit.appendChild(hDiv); unit.appendChild(rDiv); row.appendChild(unit);
   });
-  if (uIdx<units.length) {
+  // おにモードではヒントキー・キーボードハイライトを非表示
+  const keyHint = document.querySelector('.key-hint');
+  if (keyHint) keyHint.style.display = oniMode ? 'none' : '';
+  if (uIdx<units.length && !oniMode) {
     const nk=units[uIdx].romaji[rPos]||'';
     document.getElementById('hint-key').textContent=nk.toUpperCase();
     setHighlight(nk);
@@ -801,7 +890,8 @@ function onInput(key) {
 
 function onWordDone() {
   const cfg=LEVEL_CFG[currentLevel];
-  const xpGain=wordMistakes===0 ? Math.round(cfg.xp*1.5) : cfg.xp;
+  let xpGain = wordMistakes===0 ? Math.round(cfg.xp*1.5) : cfg.xp;
+  if (oniMode) xpGain *= 2; // おにモードは2倍
   roundXP+=xpGain; sfxWord(); confetti(16); showXPPop(xpGain);
   const card=document.getElementById('word-card');
   card.classList.add('success'); setTimeout(()=>card.classList.remove('success'),500);
@@ -816,11 +906,26 @@ function showXPPop(xp) {
 }
 
 function onGameComplete() {
+  // タイマー停止・記録チェック
+  gameTimeSec = Timer.stop();
+  const prevBest = DATA.getBest(currentLevel, oniMode);
+  const isRecord = prevBest === null || gameTimeSec < prevBest;
+  if (isRecord) DATA.setBest(currentLevel, oniMode, gameTimeSec);
+
+  // 記録更新ボーナス
+  const cfg=LEVEL_CFG[currentLevel];
+  let recordBonus = 0;
+  if (isRecord && prevBest !== null) {
+    recordBonus = cfg.xp * (oniMode ? 4 : 2); // 記録更新ボーナス
+    if (oniMode) recordBonus *= 2;
+    roundXP += recordBonus;
+  }
+
   const prevXP=getXP(), prevRank=getRank(prevXP);
   const newXP=prevXP+roundXP; setXP(newXP);
   const newRank=getRank(newXP), prog=getXpProg(newXP);
   BGM.stop();
-  setTimeout(() => sfxEnd(), 400); // BGMフェードアウト後に鳴らす
+  setTimeout(() => sfxEnd(), 400);
   confetti(55);
 
   // stars based on mistakes
@@ -828,6 +933,23 @@ function onGameComplete() {
   document.getElementById('c-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(5-stars);
   const msgs=['','もういちどやってみよう！','がんばったね！💪','よくできました！⭐','すごい！ほぼかんぺき！✨','かんぺき！ぜんもんせいかい！🎊'];
   document.getElementById('c-msg').textContent=msgs[stars];
+
+  // タイム表示・記録バッジ
+  document.getElementById('c-time').textContent = fmtTime(gameTimeSec);
+  const recEl = document.getElementById('c-record');
+  const bonusEl = document.getElementById('c-bonus-note');
+  if (isRecord && prevBest === null) {
+    recEl.textContent='🏆 はじめての きろく！'; recEl.style.display='';
+    bonusEl.style.display='none';
+  } else if (isRecord) {
+    recEl.textContent='🏆 しんきろく！'; recEl.style.display='';
+    bonusEl.textContent=`きろくこうしん ボーナス +${recordBonus} XP！`; bonusEl.style.display='';
+    confetti(30);
+  } else {
+    recEl.style.display='none';
+    bonusEl.style.display='none';
+  }
+
   document.getElementById('c-xp-num').textContent='+'+roundXP;
   document.getElementById('c-rank-icon').textContent=newRank.icon;
   document.getElementById('c-rank-name').textContent=newRank.name;
