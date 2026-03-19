@@ -700,7 +700,7 @@
     <div class="xp-bar-bg" style="margin-top:8px">
       <div class="xp-bar-fill" id="c-xp-fill" style="width:0%"></div>
     </div>
-    <div id="ticket-earned-box" class="ticket-earned-box" style="display:none;margin-top:10px">🎫 チケット +<span id="ticket-earned-num">1</span>まい ゲット！</div>
+    <div id="ticket-earned-box" class="ticket-earned-box" style="display:none;margin-top:10px">🎫 チケット +<span id="ticket-earned-num">1</span>まい ゲット！<div id="perfect-ticket-note" style="display:none;font-size:0.8em;margin-top:4px">✨ パーフェクト ボーナス +1まい！</div></div>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
     <button class="btn btn-ghost" onclick="showScreen('level-screen')">📚 レベルえらぶ</button>
@@ -1573,7 +1573,8 @@ function onGameComplete() {
   const prevXP=getXP(), prevRank=getRank(prevXP);
   const newXP=prevXP+roundXP; DATA.setXP(newXP);
   // クリア1回につき1枚チケット付与（レベル4以上は+1枚）
-  const newTickets = currentLevel >= 4 ? 2 : 1;
+  const perfectBonus = totalMistakes === 0 ? 1 : 0;
+  const newTickets = (currentLevel >= 4 ? 2 : 1) + perfectBonus;
   DATA.addTickets(newTickets);
   const newRank=getRank(newXP), prog=getXpProg(newXP);
   BGM.stop();
@@ -1618,9 +1619,11 @@ function onGameComplete() {
   // チケット通知
   const ticketBox = document.getElementById('ticket-earned-box');
   const ticketNum = document.getElementById('ticket-earned-num');
+  const perfectTicketNote = document.getElementById('perfect-ticket-note');
   if (newTickets > 0 && ticketBox) {
     ticketNum.textContent = newTickets;
     ticketBox.style.display = '';
+    if (perfectTicketNote) perfectTicketNote.style.display = perfectBonus ? '' : 'none';
   } else if (ticketBox) {
     ticketBox.style.display = 'none';
   }
