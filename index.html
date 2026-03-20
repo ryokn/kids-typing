@@ -259,6 +259,10 @@
     .lc-9 { background: linear-gradient(135deg, #6B2FB5, #2C3E7A); }
     .lc-10 { background: linear-gradient(135deg, #C9972A, #E84545); }
     .lc-10::after { content:'👑'; position:absolute; top:8px; right:10px; font-size:1.2rem; animation:spin 2s linear infinite; }
+    .lc-11 { background: linear-gradient(135deg, #116A4E, #23A876); }
+    .lc-11::after { content:'📚'; position:absolute; top:8px; right:10px; font-size:1.2rem; }
+    .lc-12 { background: linear-gradient(135deg, #7B2D3E, #C97B2A); }
+    .lc-12::after { content:'📜'; position:absolute; top:8px; right:10px; font-size:1.2rem; }
     @keyframes spin { to{transform:rotate(360deg)} }
     .lc-num  { font-size: 2.2rem; font-weight: 900; color: white; line-height: 1; -webkit-text-stroke: 1.5px var(--navy); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.22)); }
     .lc-name { font-size: 1.15rem; font-weight: 900; color: white; margin: 3px 0; text-shadow: 1px 1px 0 rgba(0,0,0,.2); }
@@ -1076,6 +1080,21 @@ const WORD_LEVELS = {
     {h:'しらゆきひめとこびとたち',e:'🍎'},{h:'おとぎのくにのまじょさま',e:'🔮'},{h:'うみのそこのにんぎょひめ',e:'🧜'},
     {h:'りゅうのとうのおうじさま',e:'🐲'},{h:'てんのかわのほしのひかり',e:'🌌'},{h:'にじのかなたのたからもの',e:'🌈'},
   ],
+  11: [ // 物語のタイトル
+    {h:'ももたろう',e:'🍑'},{h:'かぐやひめ',e:'🌙'},{h:'ぐりとぐら',e:'🐭'},
+    {h:'あかずきん',e:'🐺'},{h:'おおきなかぶ',e:'🥕'},{h:'したきりすずめ',e:'🐦'},
+    {h:'さんびきのこぶた',e:'🐷'},{h:'つるのおんがえし',e:'🦢'},
+    {h:'こぶとりじいさん',e:'👴'},{h:'はなさかじいさん',e:'🌸'},
+    {h:'きたかぜとたいよう',e:'☀️'},
+  ],
+  12: [ // ことわざ
+    {h:'いちごいちえ',e:'🍵'},{h:'いそがばまわれ',e:'🐢'},
+    {h:'なきつらにはち',e:'🐝'},{h:'のれんにうでおし',e:'💪'},
+    {h:'ろんよりしょうこ',e:'🔍'},{h:'なながころびやおき',e:'🔄'},
+    {h:'さるもきからおちる',e:'🐒'},{h:'でるくいはうたれる',e:'🔨'},
+    {h:'ちりもつもればやまとなる',e:'🏔️'},{h:'いしのうえにもさんねん',e:'⛰️'},
+    {h:'はやおきはさんもんのとく',e:'🌅'},{h:'うそはどろぼうのはじまり',e:'🤥'},
+  ],
 };
 
 const LEVEL_CFG = {
@@ -1089,6 +1108,8 @@ const LEVEL_CFG = {
   8:{ name:'むかしばなし',   stars:'★★★★★', color:'lc-8', icon:'📖', count:10, xp:200 },
   9:{ name:'マスター',       stars:'★★★★★', color:'lc-9', icon:'⚡', count:13, xp:260 },
   10:{ name:'レジェンド',    stars:'★★★★★', color:'lc-10',icon:'👑', count:15, xp:340 },
+  11:{ name:'ものがたり',   stars:'★★★★★', color:'lc-11',icon:'📚', count:10, xp:420 },
+  12:{ name:'ことわざ',     stars:'★★★★★', color:'lc-12',icon:'📜', count:10, xp:500 },
 };
 
 /* ═══ RANK DATA ═══ */
@@ -1362,7 +1383,7 @@ function showScreen(id) {
 
 /* ═══ BGM ═══ */
 // レベルごとのBPM
-const LEVEL_BPM = { 1:96, 2:112, 3:126, 4:142, 5:160, 6:168, 7:175, 8:182, 9:188, 10:195 };
+const LEVEL_BPM = { 1:96, 2:112, 3:126, 4:142, 5:160, 6:168, 7:175, 8:182, 9:188, 10:195, 11:198, 12:200 };
 
 const BGM = (() => {
   let playing = false, muted = false;
@@ -1742,6 +1763,68 @@ const BGM = (() => {
     return loopDur;
   }
 
+  // Lv11: 物語 - 英雄的叙事詩 (BPM 198)
+  function scheduleLoop11(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.E5,e],[F.G5,e],[F.A5,e],[F.G5,e], [F.E5,e],[F.D5,e],[F.C5,e],[F.E5,e],
+      [F.G5,q],[F.A5,q],                    [F.G5,q],[F.E5,e],[F.D5,e],
+      [F.C5,e],[F.E5,e],[F.G5,e],[F.E5,e], [F.D5,e],[F.E5,e],[F.G5,e],[F.A5,e],
+      [F.G5,q],[F.E5,q],                    [F.C5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.72, 'square', 0.050, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,q],[F.G3,q],                    [F.C3,q],[F.A3,q],
+      [F.G3,q],[F.D3,q],                    [F.C3,q],[F.G3,q],
+      [F.F3,q],[F.C3,q],                    [F.G3,q],[F.D3,q],
+      [F.C3,q],[F.G3,q],                    [F.C3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.6, 'sawtooth', 0.082, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.032); hat(b0+beat*q+e, 0.022);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv12: ことわざ - 最終決戦・日本的荘厳 (BPM 200)
+  function scheduleLoop12(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.D5,e],[F.F5,e],[F.A5,e],[F.D5,e], [F.E5,e],[F.G5,e],[F.A5,e],[F.G5,e],
+      [F.F5,q],[F.E5,q],                    [F.D5,e],[F.E5,e],[F.F5,q],
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.F5,e], [F.E5,e],[F.D5,e],[F.E5,e],[F.F5,e],
+      [F.A5,q],[F.G5,q],                    [F.D5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.68, 'sawtooth', 0.062, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.D3,e],[F.D3,e],[F.A3,e],[F.A3,e], [F.D3,e],[F.E3,e],[F.F3,e],[F.A3,e],
+      [F.G3,q],[F.E3,q],                    [F.D3,q],[F.A3,q],
+      [F.F3,e],[F.F3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.G3,e],[F.F3,e],[F.E3,e],
+      [F.D3,q],[F.A3,q],                    [F.D3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.6, 'sawtooth', 0.090, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.034); hat(b0+beat*q+e, 0.024);
+      }
+    }
+    return loopDur;
+  }
+
   // 裏モード通常BGM (BPM 200, Aマイナー, 緊迫感)
   function scheduleUraLoop(start) {
     const e=_e, q=_q, h=_h;
@@ -1807,7 +1890,8 @@ const BGM = (() => {
   function scheduleLoop(start) {
     if (_uraMode) return _uraCritical ? scheduleUraCriticalLoop(start) : scheduleUraLoop(start);
     const loops = [scheduleLoop1, scheduleLoop2, scheduleLoop3, scheduleLoop4, scheduleLoop5,
-                   scheduleLoop6, scheduleLoop7, scheduleLoop8, scheduleLoop9, scheduleLoop10];
+                   scheduleLoop6, scheduleLoop7, scheduleLoop8, scheduleLoop9, scheduleLoop10,
+                   scheduleLoop11, scheduleLoop12];
     return (loops[_currentLevel - 1] || scheduleLoop3)(start);
   }
 
@@ -1876,7 +1960,7 @@ function toggleMute() {
 
 /* ═══ 裏モード ═══ */
 // レベルごとの制限時間（問題数・難易度から算出）
-const URA_TIME = { 1:25, 2:35, 3:50, 4:60, 5:70, 6:75, 7:90, 8:105, 9:130, 10:160 };
+const URA_TIME = { 1:25, 2:35, 3:50, 4:60, 5:70, 6:75, 7:90, 8:105, 9:130, 10:160, 11:120, 12:150 };
 let uraMode = false;
 let uraTimeLimit = URA_TIME[5];  // 0 = なし
 let uraMaxMistakes = 0;          // -1 = なし
@@ -1926,7 +2010,7 @@ function showUraScreen() {
 function buildUraLevelGrid() {
   const el = document.getElementById('ura-level-opts');
   el.innerHTML = '';
-  for (let lv = 1; lv <= 10; lv++) {
+  for (let lv = 1; lv <= 12; lv++) {
     const btn = document.createElement('button');
     btn.className = 'ura-lv-btn' + (lv === uraSelectedLevel ? ' selected' : '');
     btn.textContent = `Lv.${lv}`;
