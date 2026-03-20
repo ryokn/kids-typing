@@ -718,18 +718,16 @@
     .ura-tab-btn:hover { opacity:1; background:#2a1a2e; box-shadow:0 0 10px rgba(255,77,77,.4); }
     .ura-tab-btn:active { transform:scale(.96); }
 
-    /* おにモードトグル */
-    .mode-toggle-btn {
-      width:100%; background:white; border:3px solid var(--navy);
-      border-radius:100px; padding:10px 22px; font-size:.95rem; font-weight:900;
-      color:var(--navy); cursor:pointer; transition:.08s;
-      box-shadow:4px 4px 0 var(--navy); font-family:inherit;
+    /* カード内おにモードトグル */
+    .lc-oni-toggle {
+      position:absolute; top:8px; right:8px;
+      background:rgba(0,0,0,.13); color:rgba(0,0,0,.45);
+      border:none; border-radius:20px; padding:3px 8px;
+      font-size:.62rem; font-weight:900; cursor:pointer;
+      font-family:inherit; transition:.12s; line-height:1.3; z-index:1;
     }
-    .mode-toggle-btn:active { transform:translate(4px,4px); box-shadow:0 0 0 var(--navy); }
-    .mode-toggle-btn.oni-on {
-      background: var(--coral); color: white; border-color: var(--coral-d);
-      box-shadow: 4px 4px 0 var(--coral-d);
-    }
+    .lc-oni-toggle.on { background:#ff4500; color:white; box-shadow:0 0 6px rgba(255,69,0,.5); }
+    .lc-oni-toggle:hover { opacity:.8; transform:scale(1.05); }
     .lc-oni { position:absolute; inset:0; border-radius:18px; border:3px solid rgba(255,80,0,.8); pointer-events:none; }
     .lc-best { font-size:.76rem; color:rgba(255,255,255,.9); margin-top:5px; font-weight:700; }
 
@@ -822,7 +820,6 @@
       <div class="xp-bar-label" id="ls-label">あと ? XP</div>
     </div>
   </div>
-  <button class="mode-toggle-btn" id="mode-toggle" onclick="toggleOni()">👹 おにモード OFF（キーボードひょうじあり）</button>
   <div class="world-tabs-row">
     <div class="world-tabs" id="world-tabs">
       <button class="world-tab active" onclick="selectWorldTab(1,this)">
@@ -2205,11 +2202,6 @@ function exitUraMode() {
 
 function toggleOni() {
   oniMode = !oniMode;
-  const btn = document.getElementById('mode-toggle');
-  btn.textContent = oniMode
-    ? '👹 おにモード ON（キーボードひょうじなし）'
-    : '👹 おにモード OFF（キーボードひょうじあり）';
-  btn.className = 'mode-toggle-btn' + (oniMode ? ' oni-on' : '');
   buildLevelGrid();
 }
 
@@ -2234,8 +2226,9 @@ function buildLevelGrid() {
     const bestStr = best ? `🏆 ${fmtTime(best)}` : '🏆 --:--';
     const btn=document.createElement('button'); btn.className=`level-card ${cfg.color}`;
     btn.innerHTML=`
+      <button class="lc-oni-toggle${oniMode?' on':''}" onclick="toggleOni();event.stopPropagation()">👹 ${oniMode?'ON':'OFF'}</button>
       <div class="lc-num">Lv.${lv}</div>
-      <div class="lc-name">${cfg.icon} ${cfg.name}${oniMode?' 👹':''}</div>
+      <div class="lc-name">${cfg.icon} ${cfg.name}</div>
       <div class="lc-stars">${cfg.stars}</div>
       <div class="lc-info">${cfg.count}もん ／ ${xpBase}〜${xpMax} XP／もん</div>
       <div class="lc-best">${bestStr}</div>
