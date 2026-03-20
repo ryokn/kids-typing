@@ -154,6 +154,12 @@
     .lc-4 { background: var(--pink); }
     .lc-5 { background: var(--purple); }
     .lc-5::after { content:'✨'; position:absolute; top:8px; right:10px; font-size:1.2rem; animation:spin 3s linear infinite; }
+    .lc-6 { background: var(--orange); }
+    .lc-7 { background: #E84545; }
+    .lc-8 { background: #3A5BC7; }
+    .lc-9 { background: linear-gradient(135deg, #6B2FB5, #2C3E7A); }
+    .lc-10 { background: linear-gradient(135deg, #C9972A, #E84545); }
+    .lc-10::after { content:'👑'; position:absolute; top:8px; right:10px; font-size:1.2rem; animation:spin 2s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
     .lc-num  { font-size: 2.2rem; font-weight: 900; color: white; line-height: 1; -webkit-text-stroke: 1.5px var(--navy); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.22)); }
     .lc-name { font-size: 1.15rem; font-weight: 900; color: white; margin: 3px 0; text-shadow: 1px 1px 0 rgba(0,0,0,.2); }
@@ -858,6 +864,38 @@ const WORD_LEVELS = {
     {h:'おおかみ',e:'🐺'},{h:'でんきゅう',e:'💡'},
     {h:'りゅうせい',e:'🌠'},{h:'ちょうちょう',e:'🦋'},
   ],
+  6: [ // たべもの: 5〜7文字
+    {h:'おむらいす',e:'🍳'},{h:'おちゃづけ',e:'🍵'},{h:'えびふらい',e:'🍤'},
+    {h:'ちょこれーと',e:'🍫'},{h:'かれーらいす',e:'🍛'},{h:'すぱげってぃ',e:'🍝'},
+    {h:'ちゃわんむし',e:'🥚'},{h:'ほうれんそう',e:'🥬'},{h:'みそらーめん',e:'🍜'},
+    {h:'てんどんぶり',e:'🍚'},{h:'やきそばめん',e:'🥢'},{h:'あんこだいふく',e:'🍡'},
+  ],
+  7: [ // のりもの: 6〜8文字
+    {h:'さんりんしゃ',e:'🛺'},{h:'へりこぷたー',e:'🚁'},{h:'ろーどばいく',e:'🏍️'},
+    {h:'すーぱーかー',e:'🏎️'},{h:'かんこうばす',e:'🚌'},{h:'こんてなせん',e:'🚢'},
+    {h:'きゅうきゅうしゃ',e:'🚑'},{h:'ちょうとっきゅう',e:'🚅'},{h:'だぶるでっかー',e:'🚎'},
+    {h:'うちゅうろけっと',e:'🚀'},{h:'けーぶるかー',e:'🚡'},{h:'すぺーすしゃとる',e:'🛸'},
+  ],
+  8: [ // むかしばなし: 7〜8文字
+    {h:'うらしまたろう',e:'🎣'},{h:'いちすんぼうし',e:'🍡'},{h:'しんでれらひめ',e:'👗'},
+    {h:'ゆきのじょおう',e:'❄️'},{h:'まほうのほうき',e:'🧹'},{h:'ようせいのくに',e:'🧚'},
+    {h:'りゅうのおしろ',e:'🐉'},{h:'まほうのらんぷ',e:'🪔'},{h:'こびとのおうち',e:'🏠'},
+    {h:'はなさかじいさん',e:'🌸'},{h:'こぶとりじいさん',e:'🧓'},{h:'おにのたいしょう',e:'👹'},
+  ],
+  9: [ // マスター: 8〜9文字
+    {h:'うちゅうひこうし',e:'👨‍🚀'},{h:'ちょうちんあんこう',e:'🐟'},{h:'さばくのおあしす',e:'🌵'},
+    {h:'かいていたんけん',e:'🤿'},{h:'かみなりいなずま',e:'⚡'},{h:'しんかいのせかい',e:'🌊'},
+    {h:'ほしのおうじさま',e:'⭐'},{h:'ちょこれーとけーき',e:'🎂'},{h:'まほうのたからもの',e:'✨'},
+    {h:'でんせつのゆうしゃ',e:'⚔️'},{h:'みにくいあひるのこ',e:'🦆'},{h:'うちゅうのふしぎ',e:'🔭'},
+    {h:'さばくのたからもの',e:'💎'},
+  ],
+  10: [ // レジェンド: 9〜11文字
+    {h:'ながぐつをはいたねこ',e:'🐈'},{h:'きょうりゅうはくぶつかん',e:'🦕'},{h:'でんせつのまほうつかい',e:'🧙'},
+    {h:'まほうのくにのおうさま',e:'👑'},{h:'しんせかいのたんけんか',e:'🗺️'},{h:'さばくのたからさがし',e:'💰'},
+    {h:'うちゅうたんけんひこうし',e:'🚀'},{h:'きょうりゅうとまんもす',e:'🦣'},{h:'せかいいちのゆうしゃさま',e:'🏆'},
+    {h:'しらゆきひめとこびとたち',e:'🍎'},{h:'おとぎのくにのまじょさま',e:'🔮'},{h:'うみのそこのにんぎょひめ',e:'🧜'},
+    {h:'りゅうのとうのおうじさま',e:'🐲'},{h:'てんのかわのほしのひかり',e:'🌌'},{h:'にじのかなたのたからもの',e:'🌈'},
+  ],
 };
 
 const LEVEL_CFG = {
@@ -866,6 +904,11 @@ const LEVEL_CFG = {
   3:{ name:'むずかしい',     stars:'★★★☆☆', color:'lc-3', icon:'🌺', count:7,  xp:35  },
   4:{ name:'もっとむずかしい',stars:'★★★★☆', color:'lc-4', icon:'🔥', count:8,  xp:55  },
   5:{ name:'チャンピオン',   stars:'★★★★★', color:'lc-5', icon:'💎', count:10, xp:80  },
+  6:{ name:'たべもの',       stars:'★★★★★', color:'lc-6', icon:'🍜', count:10, xp:110 },
+  7:{ name:'のりもの',       stars:'★★★★★', color:'lc-7', icon:'🚄', count:12, xp:150 },
+  8:{ name:'むかしばなし',   stars:'★★★★★', color:'lc-8', icon:'📖', count:12, xp:200 },
+  9:{ name:'マスター',       stars:'★★★★★', color:'lc-9', icon:'⚡', count:13, xp:260 },
+  10:{ name:'レジェンド',    stars:'★★★★★', color:'lc-10',icon:'👑', count:15, xp:340 },
 };
 
 /* ═══ RANK DATA ═══ */
@@ -1139,7 +1182,7 @@ function showScreen(id) {
 
 /* ═══ BGM ═══ */
 // レベルごとのBPM
-const LEVEL_BPM = { 1:96, 2:112, 3:126, 4:142, 5:160 };
+const LEVEL_BPM = { 1:96, 2:112, 3:126, 4:142, 5:160, 6:168, 7:175, 8:182, 9:188, 10:195 };
 
 const BGM = (() => {
   let playing = false, muted = false;
@@ -1363,8 +1406,164 @@ const BGM = (() => {
     return loopDur;
   }
 
+  // Lv6: たべもの - 軽快ロック (BPM 168)
+  function scheduleLoop6(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.G5,e],[F.A5,e],[F.C5,e],[F.D5,e],
+      [F.E5,e],[F.G5,e],[F.A5,q],           [F.G5,e],[F.E5,e],[F.D5,q],
+      [F.C5,e],[F.D5,e],[F.E5,e],[F.G5,e], [F.A5,e],[F.G5,e],[F.E5,e],[F.C5,e],
+      [F.D5,q],[F.E5,q],                    [F.G5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.75, 'square', 0.052, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[0,e],[F.C3,e],[0,e],[F.G3,e],[0,e],[F.G3,e],[0,e],
+      [F.C3,e],[0,e],[F.E3,e],[0,e],[F.G3,q],[0,q],
+      [F.A3,e],[0,e],[F.A3,e],[0,e],[F.E3,e],[0,e],[F.E3,e],[0,e],
+      [F.G3,e],[0,e],[F.D3,e],[0,e],[F.G3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { if(f) note(f, d*.55, 'sawtooth', 0.07, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.022); hat(b0+beat*q+e, 0.014);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv7: のりもの - 疾走ハードロック (BPM 175)
+  function scheduleLoop7(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.C5,e],[F.E5,e],[F.G5,e],[F.A5,e], [F.G5,e],[F.E5,e],[F.D5,e],[F.C5,e],
+      [F.E5,e],[F.D5,e],[F.C5,e],[F.D5,e], [F.E5,q],[F.G5,q],
+      [F.A5,e],[F.G5,e],[F.E5,e],[F.D5,e], [F.C5,e],[F.D5,e],[F.E5,e],[F.G5,e],
+      [F.A5,q],[F.G5,e],[F.E5,e],           [F.G5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.72, 'square', 0.055, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[F.C3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.A3,e],[F.G3,e],[F.G3,e],
+      [F.C3,q],[F.E3,q],                    [F.G3,q],[F.G3,q],
+      [F.F3,e],[F.F3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.A3,e],[F.G3,e],[F.G3,e],
+      [F.C3,h],                             [F.G3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.58, 'sawtooth', 0.075, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.024); hat(b0+beat*q+e, 0.015);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv8: むかしばなし - ドラマチックマイナー (BPM 182)
+  function scheduleLoop8(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.E5,e],[F.D5,e],[F.C5,e],[F.D5,e], [F.E5,e],[F.G5,e],[F.A5,e],[F.G5,e],
+      [F.E5,q],[F.D5,q],                    [F.C5,e],[F.D5,e],[F.E5,q],
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.D5,e],[F.C5,e],[F.A4,e],[F.C5,e],
+      [F.E5,h],                             [F.A5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.78, 'sawtooth', 0.053, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.A3,e],[F.A3,e],[F.E3,e],[F.E3,e], [F.A3,e],[F.A3,e],[F.G3,e],[F.G3,e],
+      [F.C3,q],[F.G3,q],                    [F.C3,q],[F.E3,q],
+      [F.G3,e],[F.G3,e],[F.A3,e],[F.A3,e], [F.E3,e],[F.E3,e],[F.D3,e],[F.D3,e],
+      [F.A3,h],                             [F.E3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.6, 'sawtooth', 0.08, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.026); hat(b0+beat*q+e, 0.016);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv9: マスター - 超高速メタル (BPM 188)
+  function scheduleLoop9(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.D5,e],[F.E5,e],[F.G5,e],[F.A5,e],
+      [F.G5,e],[F.E5,e],[F.D5,e],[F.C5,e], [F.E5,q],[F.G5,q],
+      [F.A5,e],[F.G5,e],[F.E5,e],[F.G5,e], [F.A5,e],[F.G5,e],[F.E5,e],[F.D5,e],
+      [F.C5,e],[F.D5,e],[F.E5,e],[F.G5,e], [F.A5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.7, 'sawtooth', 0.056, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[F.G3,e],[F.C3,e],[F.G3,e], [F.C3,e],[F.G3,e],[F.A3,e],[F.G3,e],
+      [F.C3,e],[F.E3,e],[F.G3,e],[F.C3,e], [F.G3,q],[F.D3,q],
+      [F.A3,e],[F.E3,e],[F.A3,e],[F.E3,e], [F.G3,e],[F.D3,e],[F.G3,e],[F.D3,e],
+      [F.C3,e],[F.D3,e],[F.E3,e],[F.G3,e], [F.C3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.58, 'sawtooth', 0.082, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.028); hat(b0+beat*q+e, 0.018);
+      }
+    }
+    return loopDur;
+  }
+
+  // Lv10: レジェンド - 最終決戦エピック (BPM 195)
+  function scheduleLoop10(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.C5,e],[F.E5,e],[F.G5,e],[F.A5,e], [F.G5,e],[F.E5,e],[F.D5,e],[F.C5,e],
+      [F.E5,e],[F.G5,e],[F.A5,q],           [F.G5,q],[F.E5,q],
+      [F.D5,e],[F.E5,e],[F.G5,e],[F.A5,e], [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e],
+      [F.D5,q],[F.C5,e],[F.E5,e],           [F.G5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.72, 'sawtooth', 0.058, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.C3,e],[F.C3,e],[F.G3,e],[F.G3,e], [F.C3,e],[F.C3,e],[F.A3,e],[F.A3,e],
+      [F.E3,q],[F.G3,q],                    [F.C3,q],[F.G3,q],
+      [F.F3,e],[F.F3,e],[F.G3,e],[F.G3,e], [F.A3,e],[F.A3,e],[F.E3,e],[F.E3,e],
+      [F.G3,q],[F.D3,q],                    [F.C3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.62, 'sawtooth', 0.085, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.030); hat(b0+beat*q+e, 0.020);
+      }
+    }
+    return loopDur;
+  }
+
   function scheduleLoop(start) {
-    const loops = [scheduleLoop1, scheduleLoop2, scheduleLoop3, scheduleLoop4, scheduleLoop5];
+    const loops = [scheduleLoop1, scheduleLoop2, scheduleLoop3, scheduleLoop4, scheduleLoop5,
+                   scheduleLoop6, scheduleLoop7, scheduleLoop8, scheduleLoop9, scheduleLoop10];
     return (loops[_currentLevel - 1] || scheduleLoop3)(start);
   }
 
@@ -1427,7 +1626,7 @@ function toggleOni() {
 /* ═══ LEVEL GRID ═══ */
 function buildLevelGrid() {
   const grid=document.getElementById('level-grid'); grid.innerHTML='';
-  for (let lv=1; lv<=5; lv++) {
+  for (let lv=1; lv<=10; lv++) {
     const cfg=LEVEL_CFG[lv];
     const xpBase = cfg.xp * (oniMode ? 2 : 1);
     const xpMax  = Math.round(xpBase * 1.5);
@@ -1579,9 +1778,10 @@ function onGameComplete() {
 
   const prevXP=getXP(), prevRank=getRank(prevXP);
   const newXP=prevXP+roundXP; DATA.setXP(newXP);
-  // クリア1回につき1枚チケット付与（レベル4以上は+1枚）
+  // クリア1回につきチケット付与（高レベルほど多い）
   const perfectBonus = totalMistakes === 0 ? 1 : 0;
-  const newTickets = (currentLevel >= 4 ? 2 : 1) + perfectBonus;
+  const baseTickets = currentLevel >= 10 ? 5 : currentLevel >= 8 ? 4 : currentLevel >= 6 ? 3 : currentLevel >= 4 ? 2 : 1;
+  const newTickets = baseTickets + perfectBonus;
   DATA.addTickets(newTickets);
   const newRank=getRank(newXP), prog=getXpProg(newXP);
   BGM.stop();
