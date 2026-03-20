@@ -965,12 +965,32 @@ const RMAP_ALT = {
 };
 function getValids(kana) { return RMAP_ALT[kana] || [RMAP[kana] || '?']; }
 
-/* ═══ KANA PARSER (handles compound kana 拗音) ═══ */
+/* ═══ KANA PARSER (handles compound kana 拗音 & 促音っ) ═══ */
 const SMALL_KANA = new Set(['ぁ','ぃ','ぅ','ぇ','ぉ','ゃ','ゅ','ょ']);
 function parseKana(h) {
   const chars = [...h], units = [];
   for (let i = 0; i < chars.length; i++) {
-    if (i + 1 < chars.length && SMALL_KANA.has(chars[i+1])) {
+    if (chars[i] === 'っ') {
+      // 促音: 次の文字（拗音も含む）と合わせて子音重複 or xtu/ltu で入力
+      let nextKana = '', skip = 0;
+      if (i + 1 < chars.length) {
+        if (i + 2 < chars.length && SMALL_KANA.has(chars[i+2])) {
+          nextKana = chars[i+1] + chars[i+2]; skip = 2;  // っきゃ など
+        } else {
+          nextKana = chars[i+1]; skip = 1;
+        }
+      }
+      if (nextKana) {
+        const nv = getValids(nextKana);
+        const doubleValids = nv.map(v => v[0] + v);           // tto, sshi, ccha ...
+        const xtuValids = ['xtu','ltu'].flatMap(p => nv.map(v => p + v));
+        units.push({ kana: 'っ' + nextKana, romaji: doubleValids[0], valids: [...doubleValids, ...xtuValids] });
+        i += skip;
+      } else {
+        // 語末の っ（単独）
+        units.push({ kana: 'っ', romaji: 'xtu', valids: ['xtu','ltu','xtsu','ltsu'] });
+      }
+    } else if (i + 1 < chars.length && SMALL_KANA.has(chars[i+1])) {
       const pair = chars[i] + chars[i+1];
       units.push({ kana: pair, romaji: RMAP[pair] || '?', valids: getValids(pair) });
       i++;
