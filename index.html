@@ -658,6 +658,29 @@
     .item-popup-count { font-size:.85rem; color:#999; font-weight:700; }
     .item-popup-count span { color:var(--coral); font-size:1.1rem; }
 
+    /* 設定ボタン（スタート画面右上） */
+    .settings-btn {
+      position:absolute; top:14px; right:14px; background:none; border:none;
+      font-size:1.6rem; cursor:pointer; opacity:.5; transition:.15s; padding:6px;
+      border-radius:50%; line-height:1;
+    }
+    .settings-btn:hover { opacity:1; background:rgba(0,0,0,.06); }
+    /* 設定画面 */
+    .settings-section { width:100%; }
+    .settings-label { font-size:.75rem; font-weight:900; color:#999; letter-spacing:2px; margin-bottom:6px; text-transform:uppercase; }
+    .settings-card { background:white; border:3px solid var(--navy); border-radius:18px; box-shadow:4px 4px 0 var(--navy); overflow:hidden; }
+    .settings-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px; }
+    .settings-row-title { font-size:1rem; font-weight:900; color:var(--navy); }
+    .settings-row-sub { font-size:.75rem; color:#888; margin-top:3px; }
+    .btn-danger { background:#ff4d4d; color:white; border:none; border-radius:12px; padding:10px 18px; font-size:.88rem; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:3px 3px 0 #990000; transition:.1s; }
+    .btn-danger:hover { background:#ff2222; }
+    .btn-danger:active { transform:translate(3px,3px); box-shadow:0 0 0; }
+    .reset-confirm { background:#fff5f5; border:3px solid #ff4d4d; border-radius:18px; padding:20px; width:100%; box-sizing:border-box; text-align:center; animation:popIn .2s cubic-bezier(.34,1.56,.64,1); }
+    .reset-confirm-msg { font-size:1rem; font-weight:900; color:#cc0000; line-height:1.6; margin-bottom:14px; }
+    .reset-confirm-msg span { font-size:.8rem; color:#888; font-weight:700; }
+    .reset-confirm-btns { display:flex; gap:10px; justify-content:center; }
+    .btn-danger-confirm { background:#cc0000; color:white; border:none; border-radius:12px; padding:12px 22px; font-size:.95rem; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:4px 4px 0 #660000; transition:.1s; }
+    .btn-danger-confirm:active { transform:translate(4px,4px); box-shadow:0 0 0; }
     /* スタート画面ガチャCTA */
     .gacha-cta-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; width:100%; }
     .gacha-cta-btn {
@@ -802,6 +825,7 @@
 
 <!-- ═══ START ═══ -->
 <div id="start-screen" class="screen active">
+  <button class="settings-btn" onclick="showScreen('settings-screen')">⚙️</button>
   <div class="mascot">⌨️</div>
   <div class="title-big">たのしい タイピング</div>
   <div class="title-sub">キーボードでひらがなをうってみよう！</div>
@@ -816,6 +840,31 @@
     <button class="gacha-cta-btn" id="gacha-cta-btn" onclick="showScreen('gacha-screen')">🎰 ガチャ！</button>
     <button class="gacha-cta-btn" style="background:var(--mint);box-shadow:4px 4px 0 var(--navy)" onclick="showGachaCollection()">📚 コレクション</button>
   </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="settings-screen" class="screen">
+  <div class="title-big" style="font-size:clamp(1.4rem,4vw,2rem)">⚙️ せってい</div>
+  <div class="settings-section">
+    <div class="settings-label">データ</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-title">データをリセット</div>
+          <div class="settings-row-sub">XP・きろく・ガチャ・コレクションがすべて消えます</div>
+        </div>
+        <button class="btn-danger" onclick="confirmReset()">リセット</button>
+      </div>
+    </div>
+  </div>
+  <div id="reset-confirm" class="reset-confirm" style="display:none">
+    <div class="reset-confirm-msg">⚠️ ほんとうに リセットしますか？<br><span>この操作はもとにもどせません</span></div>
+    <div class="reset-confirm-btns">
+      <button class="btn btn-ghost" onclick="cancelReset()">やめる</button>
+      <button class="btn-danger-confirm" onclick="executeReset()">リセットする</button>
+    </div>
+  </div>
+  <button class="btn btn-ghost" onclick="showScreen('start-screen')" style="margin-top:8px">← もどる</button>
 </div>
 
 <!-- ═══ LEVEL SELECT ═══ -->
@@ -1203,30 +1252,30 @@ const WORD_LEVELS = {
 
 const LEVEL_CFG = {
   // きほん (Lv1-4)
-  1:{ name:'やさしい',        stars:'★☆☆☆', color:'lc-1',  icon:'🌱', count:5,  xp:10,  group:1 },
-  2:{ name:'ふつう',          stars:'★★☆☆', color:'lc-2',  icon:'🌿', count:6,  xp:20,  group:1 },
-  3:{ name:'むずかしい',      stars:'★★★☆', color:'lc-3',  icon:'🌺', count:7,  xp:35,  group:1 },
-  4:{ name:'もっとむずかしい', stars:'★★★★', color:'lc-4',  icon:'🔥', count:8,  xp:55,  group:1 },
-  // テーマ (Lv5-8)
-  5:{ name:'チャンピオン',    stars:'★☆☆☆', color:'lc-5',  icon:'💎', count:8,  xp:80,  group:2 },
-  6:{ name:'たべもの',        stars:'★★☆☆', color:'lc-6',  icon:'🍜', count:8,  xp:110, group:2 },
-  7:{ name:'のりもの',        stars:'★★★☆', color:'lc-7',  icon:'🚄', count:10, xp:150, group:2 },
-  8:{ name:'むかしばなし',    stars:'★★★★', color:'lc-8',  icon:'📖', count:10, xp:200, group:2 },
-  // じょうきゅう (Lv9-12)
-  9:{ name:'マスター',        stars:'★☆☆☆', color:'lc-9',  icon:'⚡', count:13, xp:260, group:3 },
-  10:{ name:'レジェンド',     stars:'★★☆☆', color:'lc-10', icon:'👑', count:15, xp:340, group:3 },
-  11:{ name:'ものがたり',     stars:'★★★☆', color:'lc-11', icon:'📚', count:10, xp:420, group:2 },
-  12:{ name:'ことわざ',       stars:'★★★★', color:'lc-12', icon:'📜', count:10, xp:500, group:2 },
+  1:{ name:'やさしい',        stars:'★☆☆☆', color:'lc-1',  icon:'🌱', count:5,  xp:5,   group:1 },
+  2:{ name:'ふつう',          stars:'★★☆☆', color:'lc-2',  icon:'🌿', count:6,  xp:7,   group:1 },
+  3:{ name:'むずかしい',      stars:'★★★☆', color:'lc-3',  icon:'🌺', count:7,  xp:10,  group:1 },
+  4:{ name:'もっとむずかしい', stars:'★★★★', color:'lc-4',  icon:'🔥', count:8,  xp:14,  group:1 },
+  // テーマ (Lv5-8, 11-12)
+  5:{ name:'チャンピオン',    stars:'★☆☆☆', color:'lc-5',  icon:'💎', count:8,  xp:18,  group:2 },
+  6:{ name:'たべもの',        stars:'★★☆☆', color:'lc-6',  icon:'🍜', count:8,  xp:20,  group:2 },
+  7:{ name:'のりもの',        stars:'★★★☆', color:'lc-7',  icon:'🚄', count:10, xp:24,  group:2 },
+  8:{ name:'むかしばなし',    stars:'★★★★', color:'lc-8',  icon:'📖', count:10, xp:28,  group:2 },
+  11:{ name:'ものがたり',     stars:'★★★☆', color:'lc-11', icon:'📚', count:10, xp:26,  group:2 },
+  12:{ name:'ことわざ',       stars:'★★★★', color:'lc-12', icon:'📜', count:10, xp:30,  group:2 },
+  // じょうきゅう (Lv9-10)
+  9:{ name:'マスター',        stars:'★☆☆☆', color:'lc-9',  icon:'⚡', count:13, xp:35,  group:3 },
+  10:{ name:'レジェンド',     stars:'★★☆☆', color:'lc-10', icon:'👑', count:15, xp:45,  group:3 },
 };
 
 /* ═══ RANK DATA ═══ */
 const RANKS = [
   { name:'ひよこ',      icon:'🐣', xp:0    },
-  { name:'こねこ',      icon:'🐱', xp:100  },
-  { name:'こぎつね',    icon:'🦊', xp:300  },
-  { name:'たぬき',      icon:'🦝', xp:650  },
-  { name:'らいおん',    icon:'🦁', xp:1200 },
-  { name:'チャンピオン',icon:'🏆', xp:2200 },
+  { name:'こねこ',      icon:'🐱', xp:150  },
+  { name:'こぎつね',    icon:'🦊', xp:400  },
+  { name:'たぬき',      icon:'🦝', xp:800  },
+  { name:'らいおん',    icon:'🦁', xp:1500 },
+  { name:'チャンピオン',icon:'🏆', xp:2800 },
 ];
 function getRank(xp) { return RANKS.filter(r => xp >= r.xp).pop(); }
 function getXpProg(xp) {
@@ -1477,6 +1526,18 @@ function updateXPBars() {
   document.getElementById('g-icon').textContent=rank.icon;
   document.getElementById('g-fill').style.width=prog.pct+'%';
   document.getElementById('g-lbl').textContent=xp+' XP';
+}
+
+/* ═══ SETTINGS ═══ */
+function confirmReset() {
+  document.getElementById('reset-confirm').style.display = 'block';
+}
+function cancelReset() {
+  document.getElementById('reset-confirm').style.display = 'none';
+}
+function executeReset() {
+  localStorage.removeItem('kidsTypingData');
+  location.reload();
 }
 
 /* ═══ SCREEN ═══ */
@@ -2422,8 +2483,7 @@ function onGameComplete() {
   const cfg=LEVEL_CFG[currentLevel];
   let recordBonus = 0;
   if (isRecord && prevBest !== null) {
-    recordBonus = cfg.xp * (oniMode ? 4 : 2); // 記録更新ボーナス
-    if (oniMode) recordBonus *= 2;
+    recordBonus = cfg.xp * 3; // 記録更新ボーナス（一律3倍）
     roundXP += recordBonus;
   }
 
