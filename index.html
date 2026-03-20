@@ -116,6 +116,34 @@
       padding:16px 32px; margin:8px 0; }
     .ura-fail-num { font-size:2.2rem; font-weight:900; color:#fff; }
     .ura-fail-lbl { color:#666; font-size:.8rem; margin-top:2px; }
+    /* ── 裏モード背景・ゲーム画面ダーク化 ── */
+    #ura-bg { position:fixed; top:0; left:0; width:100vw; height:100vh;
+      z-index:1; display:none; pointer-events:none; }
+    body.ura-active { background:#000 !important; background-image:none !important; }
+    body.ura-active #game-screen {
+      position:relative; z-index:2; background:rgba(0,0,8,0.72);
+    }
+    body.ura-active .word-card {
+      background:rgba(8,8,20,0.93) !important;
+      border-color:#ff4d4d !important;
+      box-shadow:6px 6px 0 #ff4d4d !important;
+      color:#fff !important;
+    }
+    body.ura-active .char-hira { color:#00ff88 !important; }
+    body.ura-active .char-hira.done { color:#1a5533 !important; }
+    body.ura-active .char-hira.active { color:#00ff88 !important; }
+    body.ura-active .r-done { color:#1a6644 !important; }
+    body.ura-active .r-next { color:#ff4d4d !important; }
+    body.ura-active .r-rest { color:#888 !important; }
+    body.ura-active .top-bar { background:rgba(0,0,0,0.8); }
+    body.ura-active .timer-row { color:#00ff88; }
+    body.ura-active .word-emoji { filter:drop-shadow(0 0 8px #00ff88); }
+    body.ura-active .key-btn { background:#0a0a15 !important; color:#00cc66 !important;
+      border-color:#1a3322 !important; }
+    body.ura-active .key-btn.highlight { background:#ff4d4d !important;
+      border-color:#ff4d4d !important; color:#fff !important; }
+    body.ura-active .progress-bar { background:#1a0008; }
+    body.ura-active .progress-fill { background:linear-gradient(90deg,#ff4d4d,#ff0000); }
 
     .btn-play {
       background: var(--green);
@@ -635,6 +663,7 @@
 </head>
 <body>
 
+<canvas id="ura-bg"></canvas>
 <div id="confetti-layer"></div>
 
 <!-- ガチャフラッシュ -->
@@ -1300,6 +1329,7 @@ const BGM = (() => {
   let _bpm = 126, _e, _q, _h, _w;
   let _noiseBuffer = null;
   let _currentLevel = 1;
+  let _uraMode = false, _uraCritical = false;
 
   const F = {
     C3:130.8, D3:146.8, E3:164.8, F3:174.6, G3:196.0, A3:220.0, B3:246.9,
@@ -1671,7 +1701,70 @@ const BGM = (() => {
     return loopDur;
   }
 
+  // 裏モード通常BGM (BPM 200, Aマイナー, 緊迫感)
+  function scheduleUraLoop(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.E5,e],[F.D5,e],[F.C5,e],[F.A4,e], [F.E5,e],[F.G5,e],[F.A5,e],[F.G5,e],
+      [F.E5,e],[F.D5,e],[F.C5,q],           [F.A4,e],[F.C5,e],[F.E5,q],
+      [F.G5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.D5,e],[F.C5,e],[F.A4,e],[F.C5,e],
+      [F.E5,h],                             [F.A5,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.7, 'sawtooth', 0.058, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.A3,e],[F.E3,e],[F.A3,e],[F.E3,e], [F.A3,e],[F.G3,e],[F.A3,e],[F.G3,e],
+      [F.C3,q],[F.E3,q],                    [F.C3,q],[F.A3,q],
+      [F.G3,e],[F.D3,e],[F.G3,e],[F.D3,e], [F.A3,e],[F.G3,e],[F.E3,e],[F.D3,e],
+      [F.A3,h],                             [F.E3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.62, 'sawtooth', 0.088, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        if (beat===1||beat===3) snare(b0+beat*q);
+        hat(b0+beat*q, 0.030); hat(b0+beat*q+e, 0.022);
+      }
+    }
+    return loopDur;
+  }
+
+  // 裏モード危機BGM (BPM 215, さらに緊迫・全拍スネア)
+  function scheduleUraCriticalLoop(start) {
+    const e=_e, q=_q, h=_h;
+    const mel = [
+      [F.A5,e],[F.A5,e],[F.G5,e],[F.E5,e], [F.A5,e],[F.G5,e],[F.E5,e],[F.D5,e],
+      [F.C5,e],[F.E5,e],[F.D5,e],[F.C5,e], [F.A4,e],[F.C5,e],[F.E5,q],
+      [F.G5,e],[F.G5,e],[F.A5,e],[F.G5,e], [F.E5,e],[F.D5,e],[F.C5,e],[F.A4,e],
+      [F.E5,q],[F.D5,q],                    [F.A4,h],
+    ];
+    let t = start;
+    mel.forEach(([f,d]) => { if(f) note(f, d*.65, 'sawtooth', 0.064, t); t += d; });
+    const loopDur = t - start;
+    const bass = [
+      [F.A3,e],[F.A3,e],[F.A3,e],[F.A3,e], [F.G3,e],[F.G3,e],[F.G3,e],[F.G3,e],
+      [F.C3,e],[F.C3,e],[F.E3,e],[F.E3,e], [F.A3,e],[F.G3,e],[F.E3,q],
+      [F.D3,e],[F.D3,e],[F.D3,e],[F.D3,e], [F.E3,e],[F.E3,e],[F.G3,e],[F.G3,e],
+      [F.A3,q],[F.E3,q],                    [F.A3,h],
+    ];
+    t = start;
+    bass.forEach(([f,d]) => { note(f, d*.6, 'sawtooth', 0.095, t); t += d; });
+    for (let bar=0; bar<4; bar++) {
+      const b0 = start + bar * q * 4;
+      for (let beat=0; beat<4; beat++) {
+        kick(b0+beat*q);
+        snare(b0+beat*q + e); // 全拍スネアで最大緊迫感
+        hat(b0+beat*q, 0.035); hat(b0+beat*q+e, 0.026);
+      }
+    }
+    return loopDur;
+  }
+
   function scheduleLoop(start) {
+    if (_uraMode) return _uraCritical ? scheduleUraCriticalLoop(start) : scheduleUraLoop(start);
     const loops = [scheduleLoop1, scheduleLoop2, scheduleLoop3, scheduleLoop4, scheduleLoop5,
                    scheduleLoop6, scheduleLoop7, scheduleLoop8, scheduleLoop9, scheduleLoop10];
     return (loops[_currentLevel - 1] || scheduleLoop3)(start);
@@ -1699,7 +1792,7 @@ const BGM = (() => {
       tick();
     },
     stop() {
-      playing = false;
+      playing = false; _uraMode = false; _uraCritical = false;
       clearTimeout(loopId);
       if (masterGain) {
         try {
@@ -1708,6 +1801,23 @@ const BGM = (() => {
         } catch(_) {}
         setTimeout(() => { try { masterGain.disconnect(); } catch(_) {} masterGain = null; }, 600);
       }
+    },
+    startUra() {
+      if (!audioCtx) return;
+      _uraMode = true; _uraCritical = false;
+      calc(200);
+      if (playing) return;
+      playing = true;
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = muted ? 0 : 0.42;
+      masterGain.connect(audioCtx.destination);
+      nextLoopTime = audioCtx.currentTime + 0.05;
+      tick();
+    },
+    setUraCritical(c) {
+      if (!_uraMode) return;
+      _uraCritical = c;
+      calc(c ? 215 : 200);
     },
     toggleMute() {
       muted = !muted;
@@ -1730,6 +1840,40 @@ let uraMaxMistakes = 3;  // -1 = なし
 let uraSelectedLevel = 5;
 let uraTimeLeft = 0;
 let uraCountdownId = null;
+
+/* ── Matrix雨エフェクト ── */
+const URA_CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let uraRainId = null;
+
+function startUraRain() {
+  const canvas = document.getElementById('ura-bg');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  const cols = Math.floor(canvas.width / 18);
+  const drops = Array.from({length: cols}, () => Math.random() * -50);
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < drops.length; i++) {
+      const bright = Math.random() > 0.9;
+      ctx.fillStyle = bright ? '#afffcf' : '#00cc44';
+      ctx.font = `${14 + (bright ? 2 : 0)}px monospace`;
+      ctx.fillText(URA_CHARS[Math.floor(Math.random() * URA_CHARS.length)], i * 18, drops[i] * 18);
+      if (drops[i] * 18 > canvas.height && Math.random() > 0.97) drops[i] = 0;
+      drops[i] += 0.6;
+    }
+    uraRainId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopUraRain() {
+  if (uraRainId) { cancelAnimationFrame(uraRainId); uraRainId = null; }
+  const canvas = document.getElementById('ura-bg');
+  canvas.style.display = 'none';
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
 
 function showUraScreen() {
   buildUraLevelGrid();
@@ -1773,6 +1917,8 @@ function startUraCountdown() {
   const hud = document.getElementById('ura-hud');
   hud.style.display = 'flex';
   updateUraMissDisplay();
+  startUraRain();
+  document.body.classList.add('ura-active');
   if (uraTimeLimit <= 0) {
     document.getElementById('ura-timer-disp').textContent = '⏱ ∞';
     return;
@@ -1789,7 +1935,9 @@ function startUraCountdown() {
 function renderUraTimer() {
   const el = document.getElementById('ura-timer-disp');
   el.textContent = `⏱ ${uraTimeLeft}びょう`;
-  el.className = 'ura-timer-disp' + (uraTimeLeft <= 10 ? ' warning' : '');
+  const crit = uraTimeLeft <= 10;
+  el.className = 'ura-timer-disp' + (crit ? ' warning' : '');
+  BGM.setUraCritical(crit);
 }
 
 function updateUraMissDisplay() {
@@ -1817,10 +1965,15 @@ function uraFail(reason) {
 function clearUraTimer() {
   if (uraCountdownId) { clearInterval(uraCountdownId); uraCountdownId = null; }
   document.getElementById('ura-hud').style.display = 'none';
+  stopUraRain();
+  document.body.classList.remove('ura-active');
+  BGM.setUraCritical(false);
 }
 
 function exitUraMode() {
   uraMode = false;
+  stopUraRain();
+  document.body.classList.remove('ura-active');
   showScreen('level-screen');
 }
 
@@ -1878,7 +2031,11 @@ function startGame(lv) {
   Timer.start();
   initAudio();
   BGM.stop();
-  setTimeout(() => BGM.start(lv), 100);
+  if (uraMode) {
+    setTimeout(() => BGM.startUra(), 100);
+  } else {
+    setTimeout(() => BGM.start(lv), 100);
+  }
   clearUraTimer();
   if (uraMode) setTimeout(startUraCountdown, 150);
 }
