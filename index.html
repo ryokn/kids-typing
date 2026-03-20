@@ -711,6 +711,7 @@
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
     <button class="btn btn-ghost" onclick="showScreen('level-screen')">📚 レベルえらぶ</button>
     <button class="btn btn-play" onclick="replayLevel()">🔄 もういちど！</button>
+    <button class="btn" id="c-gacha-btn" onclick="showScreen('gacha-screen')" style="background:var(--sun);color:var(--navy);box-shadow:4px 4px 0 var(--navy)">🎰 ガチャへ！</button>
   </div>
 </div>
 
@@ -1632,6 +1633,19 @@ function onGameComplete() {
     if (perfectTicketNote) perfectTicketNote.style.display = perfectBonus ? '' : 'none';
   } else if (ticketBox) {
     ticketBox.style.display = 'none';
+  }
+
+  // ガチャボタン：チケットがあれば目立たせる
+  const gachaBtn = document.getElementById('c-gacha-btn');
+  if (gachaBtn) {
+    const totalTickets = DATA.getTickets();
+    if (totalTickets > 0) {
+      gachaBtn.style.cssText = 'background:var(--sun);color:var(--navy);box-shadow:4px 4px 0 var(--navy)';
+      gachaBtn.textContent = `🎰 ガチャへ！（🎫×${totalTickets}）`;
+    } else {
+      gachaBtn.style.cssText = 'background:#ddd;color:#888;box-shadow:4px 4px 0 #aaa;cursor:default';
+      gachaBtn.textContent = '🎰 ガチャへ！（チケットなし）';
+    }
   }
 
   setTimeout(()=>showScreen('complete-screen'),1600);
