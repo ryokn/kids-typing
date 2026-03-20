@@ -836,19 +836,16 @@
   </div>
   <div class="ura-section">
     <div class="ura-section-label">せいげんじかん</div>
-    <div class="ura-opts" id="ura-time-opts">
-      <button class="ura-opt" onclick="setUraTime(30,this)">30びょう</button>
-      <button class="ura-opt selected" onclick="setUraTime(60,this)">60びょう</button>
-      <button class="ura-opt" onclick="setUraTime(90,this)">90びょう</button>
-      <button class="ura-opt" onclick="setUraTime(120,this)">120びょう</button>
-      <button class="ura-opt" onclick="setUraTime(0,this)">なし</button>
+    <div id="ura-time-auto" style="text-align:center;font-size:1.4rem;font-weight:900;color:#00ff88;letter-spacing:2px;padding:6px 0;">
+      <span id="ura-auto-time-val">--</span>びょう
+      <span style="font-size:.75rem;color:#336644;font-weight:400;display:block;margin-top:2px;">もんだいすうにあわせてじどうせってい</span>
     </div>
   </div>
   <div class="ura-section">
     <div class="ura-section-label">きょようミスすう</div>
     <div class="ura-opts" id="ura-miss-opts">
-      <button class="ura-opt" onclick="setUraMiss(0,this)">0かい（かんぺき）</button>
-      <button class="ura-opt selected" onclick="setUraMiss(3,this)">3かい</button>
+      <button class="ura-opt selected" onclick="setUraMiss(0,this)">0かい（かんぺき）</button>
+      <button class="ura-opt" onclick="setUraMiss(3,this)">3かい</button>
       <button class="ura-opt" onclick="setUraMiss(5,this)">5かい</button>
       <button class="ura-opt" onclick="setUraMiss(10,this)">10かい</button>
       <button class="ura-opt" onclick="setUraMiss(-1,this)">なし</button>
@@ -1858,9 +1855,11 @@ function toggleMute() {
 }
 
 /* ═══ 裏モード ═══ */
+// レベルごとの制限時間（問題数・難易度から算出）
+const URA_TIME = { 1:25, 2:35, 3:50, 4:60, 5:70, 6:75, 7:90, 8:105, 9:130, 10:160 };
 let uraMode = false;
-let uraTimeLimit = 60;   // 0 = なし
-let uraMaxMistakes = 3;  // -1 = なし
+let uraTimeLimit = URA_TIME[5];  // 0 = なし
+let uraMaxMistakes = 0;          // -1 = なし
 let uraSelectedLevel = 5;
 let uraTimeLeft = 0;
 let uraCountdownId = null;
@@ -1915,15 +1914,15 @@ function buildUraLevelGrid() {
       uraSelectedLevel = lv;
       el.querySelectorAll('.ura-lv-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      updateUraTimeDisplay();
     };
     el.appendChild(btn);
   }
+  updateUraTimeDisplay();
 }
 
-function setUraTime(t, btn) {
-  uraTimeLimit = t;
-  btn.closest('.ura-opts').querySelectorAll('.ura-opt').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
+function updateUraTimeDisplay() {
+  document.getElementById('ura-auto-time-val').textContent = URA_TIME[uraSelectedLevel] ?? '--';
 }
 
 function setUraMiss(m, btn) {
@@ -1934,6 +1933,7 @@ function setUraMiss(m, btn) {
 
 function startUraGame() {
   uraMode = true;
+  uraTimeLimit = URA_TIME[uraSelectedLevel] ?? 0;
   startGame(uraSelectedLevel);
 }
 
