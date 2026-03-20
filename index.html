@@ -603,10 +603,46 @@
     .coll-cell.r5-cell { border-color:var(--sun-d); background:var(--sun); box-shadow:2px 2px 0 var(--sun-d); }
     .coll-cell.r4-cell { border-color:var(--purple-d); background:#ede5ff; box-shadow:2px 2px 0 var(--purple-d); }
     .coll-cell.locked { opacity:.3; filter:grayscale(.8); }
+    .coll-cell.owned { cursor:pointer; }
+    .coll-cell.locked { cursor:default; }
     .coll-emoji { font-size:clamp(24px,5vw,36px); line-height:1.15; display:block; }
     .coll-name  { font-size:.6rem; color:var(--navy); font-weight:900; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .coll-s     { font-size:.55rem; letter-spacing:.5px; color:#aaa; }
     .coll-count { position:absolute; top:-6px; right:-6px; background:var(--coral); color:white; font-size:.6rem; font-weight:900; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border:2px solid white; }
+
+    /* アイテム詳細ポップアップ */
+    .item-popup-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:100;
+      display:flex; align-items:center; justify-content:center;
+      animation:fadeIn .15s ease;
+    }
+    .item-popup-card {
+      background:#fff; border-radius:28px; padding:28px 24px 24px;
+      border:4px solid var(--navy); box-shadow:8px 8px 0 var(--navy);
+      max-width:320px; width:88%; text-align:center; position:relative;
+      animation:popIn .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes popIn { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .item-popup-close {
+      position:absolute; top:12px; right:14px; background:none; border:none;
+      font-size:1.2rem; cursor:pointer; color:#aaa; line-height:1;
+      padding:4px 6px; border-radius:50%; transition:.15s;
+    }
+    .item-popup-close:hover { background:#f0f0f0; color:#333; }
+    .item-popup-emoji { font-size:4.5rem; line-height:1.1; margin-bottom:6px; }
+    .item-popup-name  { font-size:1.6rem; font-weight:900; color:var(--navy); margin-bottom:4px; }
+    .item-popup-stars { font-size:1rem; letter-spacing:2px; margin-bottom:2px; }
+    .item-popup-rarity { font-size:.8rem; font-weight:900; padding:3px 10px; border-radius:20px;
+      display:inline-block; margin-bottom:14px; }
+    .ip-r1 { background:#f0f0f0; color:#888; }
+    .ip-r2 { background:#e8f4fd; color:#2980b9; }
+    .ip-r3 { background:#eafaf1; color:#27ae60; }
+    .ip-r4 { background:#f0e6ff; color:#8e44ad; }
+    .ip-r5 { background:var(--sun); color:#7a5200; }
+    .item-popup-desc  { font-size:.95rem; line-height:1.65; color:#444; margin-bottom:12px; min-height:3em; }
+    .item-popup-count { font-size:.85rem; color:#999; font-weight:700; }
+    .item-popup-count span { color:var(--coral); font-size:1.1rem; }
 
     /* スタート画面ガチャCTA */
     .gacha-cta-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; width:100%; }
@@ -915,6 +951,19 @@
   <button class="btn btn-ghost" onclick="showScreen('start-screen')">← もどる</button>
 </div>
 
+<!-- ═══ アイテム詳細ポップアップ ═══ -->
+<div id="item-popup-overlay" class="item-popup-overlay" onclick="closeItemPopup()" style="display:none">
+  <div class="item-popup-card" onclick="event.stopPropagation()">
+    <button class="item-popup-close" onclick="closeItemPopup()">✕</button>
+    <div class="item-popup-emoji" id="item-popup-emoji">🐱</div>
+    <div class="item-popup-name" id="item-popup-name">ねこ</div>
+    <div class="item-popup-stars" id="item-popup-stars">★☆☆☆☆</div>
+    <div class="item-popup-rarity" id="item-popup-rarity">コモン</div>
+    <div class="item-popup-desc" id="item-popup-desc"></div>
+    <div class="item-popup-count" id="item-popup-count"></div>
+  </div>
+</div>
+
 <script>
 /* ═══ ROMAJI MAP ═══ */
 const RMAP = {
@@ -1166,56 +1215,56 @@ const setXP = v  => DATA.setXP(v);
 /* ═══ GACHA ITEMS ═══ */
 const GACHA_ITEMS = [
   // ★★★★★ レジェンド (3%) — 6種
-  { id:'dragon',   emoji:'🐉', name:'ドラゴン',     rarity:5, stars:'★★★★★' },
-  { id:'unicorn',  emoji:'🦄', name:'ユニコーン',   rarity:5, stars:'★★★★★' },
-  { id:'alien',    emoji:'👾', name:'エイリアン',   rarity:5, stars:'★★★★★' },
-  { id:'mermaid',  emoji:'🧜', name:'にんぎょ',     rarity:5, stars:'★★★★★' },
-  { id:'rainbow',  emoji:'🌈', name:'にじ',         rarity:5, stars:'★★★★★' },
-  { id:'fairy',    emoji:'🧚', name:'ようせい',     rarity:5, stars:'★★★★★' },
+  { id:'dragon',   emoji:'🐉', name:'ドラゴン',     rarity:5, stars:'★★★★★', desc:'そらをじゆうにとびながら、もえさかるほのおをはく！むかしばなしにでてくる、でんせつのいきもの。' },
+  { id:'unicorn',  emoji:'🦄', name:'ユニコーン',   rarity:5, stars:'★★★★★', desc:'おでこにかがやくまほうのツノをもつ、まっしろなうま。しあわせをよぶ、おとぎばなしのいきもの。' },
+  { id:'alien',    emoji:'👾', name:'エイリアン',   rarity:5, stars:'★★★★★', desc:'はるかとおいうちゅうからやってきた、ふしぎないきもの。どんなほしからきたのかな？' },
+  { id:'mermaid',  emoji:'🧜', name:'にんぎょ',     rarity:5, stars:'★★★★★', desc:'うみのそこにすむ、にんげんとさかなのあいのこ。きれいなこえでうたをうたう。' },
+  { id:'rainbow',  emoji:'🌈', name:'にじ',         rarity:5, stars:'★★★★★', desc:'あめがやんだあとのそらにかかる、7いろのアーチ。みつけるとしあわせになれるといわれている！' },
+  { id:'fairy',    emoji:'🧚', name:'ようせい',     rarity:5, stars:'★★★★★', desc:'ちいさなはねでふわふわとびまわる、まほうのいきもの。はなばたけにかくれているよ。' },
   // ★★★★ スーパー (10%) — 8種
-  { id:'lion',     emoji:'🦁', name:'らいおん',     rarity:4, stars:'★★★★☆' },
-  { id:'tiger',    emoji:'🐯', name:'とら',         rarity:4, stars:'★★★★☆' },
-  { id:'wolf',     emoji:'🐺', name:'おおかみ',     rarity:4, stars:'★★★★☆' },
-  { id:'trex',     emoji:'🦖', name:'ティラノ',     rarity:4, stars:'★★★★☆' },
-  { id:'shark',    emoji:'🦈', name:'さめ',         rarity:4, stars:'★★★★☆' },
-  { id:'eagle',    emoji:'🦅', name:'わし',         rarity:4, stars:'★★★★☆' },
-  { id:'croc',     emoji:'🐊', name:'わに',         rarity:4, stars:'★★★★☆' },
-  { id:'gorilla',  emoji:'🦍', name:'ゴリラ',       rarity:4, stars:'★★★★☆' },
+  { id:'lion',     emoji:'🦁', name:'らいおん',     rarity:4, stars:'★★★★☆', desc:'どうぶつのおうさまとよばれる、たてがみがりっぱなねこのなかま。アフリカのくさはらにすんでいる。' },
+  { id:'tiger',    emoji:'🐯', name:'とら',         rarity:4, stars:'★★★★☆', desc:'くろいしまもようがとくちょうの、おおきなねこのなかま。はやく、ちからも強い！' },
+  { id:'wolf',     emoji:'🐺', name:'おおかみ',     rarity:4, stars:'★★★★☆', desc:'もりにすむかしこくてつよいいきもの。むれでちからをあわせてくらす。' },
+  { id:'trex',     emoji:'🦖', name:'ティラノ',     rarity:4, stars:'★★★★☆', desc:'6600まんねんもまえにいた、さいきょうのきょうりゅう！おおきなあたまとするどいキバがこわい。' },
+  { id:'shark',    emoji:'🦈', name:'さめ',         rarity:4, stars:'★★★★☆', desc:'うみのハンターとよばれる、すばやいさかな。するどいはが何まいもはえかわる！' },
+  { id:'eagle',    emoji:'🦅', name:'わし',         rarity:4, stars:'★★★★☆', desc:'そらたかくとぶ、めのするどいとり。するどいツメでえものをつかまえる。' },
+  { id:'croc',     emoji:'🐊', name:'わに',         rarity:4, stars:'★★★★☆', desc:'かわやぬまにすむ、するどいキバをもつはちゅうるい。じつはとてもはやく動ける！' },
+  { id:'gorilla',  emoji:'🦍', name:'ゴリラ',       rarity:4, stars:'★★★★☆', desc:'ちきゅういちちからのつよいサルのなかま。むねをたたく「ドラミング」がゆうめい。' },
   // ★★★ レア (22%) — 10種
-  { id:'elephant', emoji:'🐘', name:'ぞう',         rarity:3, stars:'★★★☆☆' },
-  { id:'penguin',  emoji:'🐧', name:'ぺんぎん',     rarity:3, stars:'★★★☆☆' },
-  { id:'owl',      emoji:'🦉', name:'ふくろう',     rarity:3, stars:'★★★☆☆' },
-  { id:'koala',    emoji:'🐨', name:'こあら',       rarity:3, stars:'★★★☆☆' },
-  { id:'panda',    emoji:'🐼', name:'ぱんだ',       rarity:3, stars:'★★★☆☆' },
-  { id:'giraffe',  emoji:'🦒', name:'きりん',       rarity:3, stars:'★★★☆☆' },
-  { id:'zebra',    emoji:'🦓', name:'しまうま',     rarity:3, stars:'★★★☆☆' },
-  { id:'whale',    emoji:'🐋', name:'くじら',       rarity:3, stars:'★★★☆☆' },
-  { id:'parrot',   emoji:'🦜', name:'おうむ',       rarity:3, stars:'★★★☆☆' },
-  { id:'dolphin',  emoji:'🐬', name:'いるか',       rarity:3, stars:'★★★☆☆' },
+  { id:'elephant', emoji:'🐘', name:'ぞう',         rarity:3, stars:'★★★☆☆', desc:'りくにすむどうぶつでいちばんおおきい！ながいはなでものをつかんだり、みずをのんだりする。' },
+  { id:'penguin',  emoji:'🐧', name:'ぺんぎん',     rarity:3, stars:'★★★☆☆', desc:'そらはとべないけど、およぎはとくい！みなみのこおりのせかいでくらしている。' },
+  { id:'owl',      emoji:'🦉', name:'ふくろう',     rarity:3, stars:'★★★☆☆', desc:'よるにかつどうするかしこいとり。くびを270どもまわすことができる！' },
+  { id:'koala',    emoji:'🐨', name:'こあら',       rarity:3, stars:'★★★☆☆', desc:'オーストラリアにいる、ユーカリのはをたべるどうぶつ。1日18じかんもねむる。' },
+  { id:'panda',    emoji:'🐼', name:'ぱんだ',       rarity:3, stars:'★★★☆☆', desc:'くろしろのもようがかわいい、クマのなかま。タケをもぐもぐたべるのがすき。' },
+  { id:'giraffe',  emoji:'🦒', name:'きりん',       rarity:3, stars:'★★★☆☆', desc:'くびがながくて、せかいでいちばんせがたかいどうぶつ。たかいきのはをたべられる！' },
+  { id:'zebra',    emoji:'🦓', name:'しまうま',     rarity:3, stars:'★★★☆☆', desc:'しろとくろのしまもようがとくちょう。しまのがらはひとりひとりちがうって知ってた？' },
+  { id:'whale',    emoji:'🐋', name:'くじら',       rarity:3, stars:'★★★☆☆', desc:'うみにすむいきもののなかでいちばんおおきい！おとでなかまとはなしをする。' },
+  { id:'parrot',   emoji:'🦜', name:'おうむ',       rarity:3, stars:'★★★☆☆', desc:'にんげんのことばをまねするとり。あかやみどりのはねがきれい。' },
+  { id:'dolphin',  emoji:'🐬', name:'いるか',       rarity:3, stars:'★★★☆☆', desc:'かしこくてあそびずきな、うみのアイドル。水からとびあがるジャンプがとくい！' },
   // ★★ ノーマル (30%) — 12種
-  { id:'rabbit',   emoji:'🐰', name:'うさぎ',       rarity:2, stars:'★★☆☆☆' },
-  { id:'bear',     emoji:'🐻', name:'くま',         rarity:2, stars:'★★☆☆☆' },
-  { id:'fox',      emoji:'🦊', name:'きつね',       rarity:2, stars:'★★☆☆☆' },
-  { id:'frog',     emoji:'🐸', name:'かえる',       rarity:2, stars:'★★☆☆☆' },
-  { id:'duck',     emoji:'🦆', name:'あひる',       rarity:2, stars:'★★☆☆☆' },
-  { id:'hamster',  emoji:'🐹', name:'はむすたー',   rarity:2, stars:'★★☆☆☆' },
-  { id:'sheep',    emoji:'🐑', name:'ひつじ',       rarity:2, stars:'★★☆☆☆' },
-  { id:'pig',      emoji:'🐷', name:'ぶた',         rarity:2, stars:'★★☆☆☆' },
-  { id:'cow',      emoji:'🐮', name:'うし',         rarity:2, stars:'★★☆☆☆' },
-  { id:'raccoon',  emoji:'🦝', name:'たぬき',       rarity:2, stars:'★★☆☆☆' },
-  { id:'squirrel', emoji:'🐿️', name:'りす',         rarity:2, stars:'★★☆☆☆' },
-  { id:'hedgehog', emoji:'🦔', name:'はりねずみ',   rarity:2, stars:'★★☆☆☆' },
+  { id:'rabbit',   emoji:'🐰', name:'うさぎ',       rarity:2, stars:'★★☆☆☆', desc:'ながいながいミミがとくちょう。ぴょんぴょんはねてすばやくうごく。にんじんがだいすき！' },
+  { id:'bear',     emoji:'🐻', name:'くま',         rarity:2, stars:'★★☆☆☆', desc:'もりにすむおおきなどうぶつ。ハチミツがだいすきで、ふゆはあなのなかでねむる。' },
+  { id:'fox',      emoji:'🦊', name:'きつね',       rarity:2, stars:'★★☆☆☆', desc:'かしこくてすばやい、もふもふのしっぽがかわいいどうぶつ。ばけるといわれている。' },
+  { id:'frog',     emoji:'🐸', name:'かえる',       rarity:2, stars:'★★☆☆☆', desc:'みずべにすんでいて「ケロケロ」となく。ぴょんぴょんはねてむしをつかまえる。' },
+  { id:'duck',     emoji:'🦆', name:'あひる',       rarity:2, stars:'★★☆☆☆', desc:'みずにうかんでおよぐとり。「ガーガー」となく。あるくすがたがかわいい！' },
+  { id:'hamster',  emoji:'🐹', name:'はむすたー',   rarity:2, stars:'★★☆☆☆', desc:'ほっぺにえさをいっぱいつめこむ、ちいさくてまるまるしたかわいいどうぶつ。' },
+  { id:'sheep',    emoji:'🐑', name:'ひつじ',       rarity:2, stars:'★★☆☆☆', desc:'もこもこのけがとくちょう。「メー」となく、やさしいどうぶつ。けからはセーターがつくれる。' },
+  { id:'pig',      emoji:'🐷', name:'ぶた',         rarity:2, stars:'★★☆☆☆', desc:'まるいはなとからだがとくちょう。じつはとてもかしこくて、いぬよりかしこいどうぶつ！' },
+  { id:'cow',      emoji:'🐮', name:'うし',         rarity:2, stars:'★★☆☆☆', desc:'のんびりくさをたべるどうぶつ。みんながのむミルクはうしのおかあさんからもらってる。' },
+  { id:'raccoon',  emoji:'🦝', name:'たぬき',       rarity:2, stars:'★★☆☆☆', desc:'まるまるふとったおなかとしっぽがかわいい。ばけることができるといわれている。' },
+  { id:'squirrel', emoji:'🐿️', name:'りす',         rarity:2, stars:'★★☆☆☆', desc:'ちいさくてすばやい。ふゆにそなえてどんぐりをたくさんかくしておく。' },
+  { id:'hedgehog', emoji:'🦔', name:'はりねずみ',   rarity:2, stars:'★★☆☆☆', desc:'せなかのとげとげがとくちょう。こわいときはまるまってボールみたいになる！' },
   // ★ コモン (35%) — 10種
-  { id:'cat',      emoji:'🐱', name:'ねこ',         rarity:1, stars:'★☆☆☆☆' },
-  { id:'dog',      emoji:'🐶', name:'いぬ',         rarity:1, stars:'★☆☆☆☆' },
-  { id:'chick',    emoji:'🐥', name:'ひよこ',       rarity:1, stars:'★☆☆☆☆' },
-  { id:'fish',     emoji:'🐟', name:'さかな',       rarity:1, stars:'★☆☆☆☆' },
-  { id:'star',     emoji:'⭐',  name:'ほし',         rarity:1, stars:'★☆☆☆☆' },
-  { id:'bird',     emoji:'🐦', name:'とり',         rarity:1, stars:'★☆☆☆☆' },
-  { id:'snail',    emoji:'🐌', name:'かたつむり',   rarity:1, stars:'★☆☆☆☆' },
-  { id:'turtle',   emoji:'🐢', name:'かめ',         rarity:1, stars:'★☆☆☆☆' },
-  { id:'mushroom', emoji:'🍄', name:'きのこ',       rarity:1, stars:'★☆☆☆☆' },
-  { id:'flower',   emoji:'🌸', name:'はな',         rarity:1, stars:'★☆☆☆☆' },
+  { id:'cat',      emoji:'🐱', name:'ねこ',         rarity:1, stars:'★☆☆☆☆', desc:'「ニャー」となく、じっとりしたひとみがかわいいペット。マイペースなせいかく。' },
+  { id:'dog',      emoji:'🐶', name:'いぬ',         rarity:1, stars:'★☆☆☆☆', desc:'にんげんのいちばんのおともだち。しっぽをふってよろこびをつたえる、なかよしなどうぶつ。' },
+  { id:'chick',    emoji:'🐥', name:'ひよこ',       rarity:1, stars:'★☆☆☆☆', desc:'たまごからうまれたばかりのニワトリのあかちゃん。ふわふわのけがきもちよさそう！' },
+  { id:'fish',     emoji:'🐟', name:'さかな',       rarity:1, stars:'★☆☆☆☆', desc:'みずのなかをすいすいおよぐいきもの。うろこがきらきらひかってきれい。' },
+  { id:'star',     emoji:'⭐',  name:'ほし',         rarity:1, stars:'★☆☆☆☆', desc:'よるのそらでかがやく、とおいてんたい。ながれぼしをみたらねがいがかなうといわれている！' },
+  { id:'bird',     emoji:'🐦', name:'とり',         rarity:1, stars:'★☆☆☆☆', desc:'そらをじゆうにとびまわるいきもの。はねとくちばしがとくちょう。うたごえがきれい。' },
+  { id:'snail',    emoji:'🐌', name:'かたつむり',   rarity:1, stars:'★☆☆☆☆', desc:'らせんのからをせおってゆっくりあるく。あめのひによくみかける、のんびりやさん。' },
+  { id:'turtle',   emoji:'🐢', name:'かめ',         rarity:1, stars:'★☆☆☆☆', desc:'かたいこうらをもつ、いきものののなかでいちばんながいきするどうぶつのひとつ。' },
+  { id:'mushroom', emoji:'🍄', name:'きのこ',       rarity:1, stars:'★☆☆☆☆', desc:'しめりけのあるばしょにはえるふしぎなしょくぶつ。あかいきのこはどくかもしれないよ！' },
+  { id:'flower',   emoji:'🌸', name:'はな',         rarity:1, stars:'★☆☆☆☆', desc:'きれいないろとかおりで、みんなをしあわせにしてくれる。はるになるとさくらがさく！' },
 ];
 
 /* ═══ TIMER ═══ */
@@ -2559,9 +2608,35 @@ function buildCollection() {
       <div class="coll-s">${item.stars}</div>
       ${count > 1 ? `<div class="coll-count">${count}</div>` : ''}
     `;
+    if (count > 0) cell.onclick = () => showItemPopup(item, count);
     grid.appendChild(cell);
   });
 }
+
+const RARITY_LABEL = { 1:'コモン', 2:'ノーマル', 3:'レア', 4:'スーパー', 5:'レジェンド' };
+
+function showItemPopup(item, count) {
+  document.getElementById('item-popup-emoji').textContent = item.emoji;
+  document.getElementById('item-popup-name').textContent = item.name;
+  document.getElementById('item-popup-stars').textContent = item.stars;
+  const rarityEl = document.getElementById('item-popup-rarity');
+  rarityEl.textContent = RARITY_LABEL[item.rarity] || '';
+  rarityEl.className = `item-popup-rarity ip-r${item.rarity}`;
+  document.getElementById('item-popup-desc').textContent = item.desc || '';
+  const countEl = document.getElementById('item-popup-count');
+  countEl.innerHTML = count > 1 ? `もっているかず：<span>${count}こ</span>` : '';
+  const overlay = document.getElementById('item-popup-overlay');
+  overlay.style.display = 'flex';
+}
+
+function closeItemPopup() {
+  document.getElementById('item-popup-overlay').style.display = 'none';
+}
+
+// Escキーでポップアップを閉じる
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeItemPopup();
+});
 
 function filterColl(rarity) {
   collFilter = rarity;
