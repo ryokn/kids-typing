@@ -720,6 +720,8 @@
       background:white; color:var(--navy);
       box-shadow:0 2px 8px rgba(0,0,0,.13);
     }
+    .world-tab.locked { opacity:.45; cursor:not-allowed; }
+    .world-tab.locked:hover { background:transparent; color:#666; }
     .world-tab-icon { font-size:1.3rem; line-height:1; }
     .world-tab-name { font-size:.78rem; font-weight:900; }
     /* 裏モードボタン（タブ行に並列） */
@@ -734,6 +736,11 @@
 
     /* カード内おにモードトグル */
     .lc-oni { position:absolute; inset:0; border-radius:18px; border:3px solid rgba(255,80,0,.8); pointer-events:none; }
+    .level-locked-msg {
+      text-align:center; padding:32px 16px; color:#aaa; font-size:1rem; font-weight:900;
+    }
+    .level-locked-msg .lock-icon { font-size:3rem; display:block; margin-bottom:8px; }
+    .level-locked-msg .lock-sub  { font-size:.82rem; color:#bbb; margin-top:6px; font-weight:700; }
     .lc-best { font-size:.76rem; color:rgba(255,255,255,.9); margin-top:5px; font-weight:700; }
 
     /* クリア画面：タイム・記録 */
@@ -1477,6 +1484,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id==='start-screen'||id==='level-screen') { updateXPBars(); updateTicketUI(); }
+  if (id==='level-screen') { updateWorldTabs(); buildLevelGrid(); }
   if (id==='gacha-screen') updateTicketUI();
   if (id==='collection-screen') buildCollection();
 }
@@ -2209,7 +2217,25 @@ function exitUraMode() {
 /* ═══ LEVEL GRID ═══ */
 let currentWorldTab = 1;
 
+function isGroupUnlocked(group) {
+  if (group <= 1) return true;
+  const prevLevels = Object.keys(LEVEL_CFG).map(Number).filter(lv => LEVEL_CFG[lv].group === group - 1);
+  return prevLevels.every(lv => DATA.getBest(lv, false) !== null);
+}
+
+function updateWorldTabs() {
+  document.querySelectorAll('.world-tab').forEach((btn, i) => {
+    const group = i + 1;
+    const unlocked = isGroupUnlocked(group);
+    btn.classList.toggle('locked', !unlocked);
+    const iconEl = btn.querySelector('.world-tab-icon');
+    const names = ['🌱','🎯','👑'];
+    iconEl.textContent = unlocked ? names[i] : '🔒';
+  });
+}
+
 function selectWorldTab(group, btn) {
+  if (!isGroupUnlocked(group)) return;
   currentWorldTab = group;
   document.querySelectorAll('.world-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -2218,6 +2244,16 @@ function selectWorldTab(group, btn) {
 
 function buildLevelGrid() {
   const grid=document.getElementById('level-grid'); grid.innerHTML='';
+  if (!isGroupUnlocked(currentWorldTab)) {
+    const prevLevels = Object.keys(LEVEL_CFG).map(Number).filter(lv => LEVEL_CFG[lv].group === currentWorldTab - 1);
+    const remaining = prevLevels.filter(lv => DATA.getBest(lv, false) === null).length;
+    grid.innerHTML = `<div class="level-locked-msg">
+      <span class="lock-icon">🔒</span>
+      まえのグループをぜんぶクリアすると かいほうされます
+      <div class="lock-sub">あと ${remaining} ステージのこっています</div>
+    </div>`;
+    return;
+  }
   for (let lv=1; lv<=12; lv++) {
     const cfg=LEVEL_CFG[lv];
     if (cfg.group !== currentWorldTab) continue;
