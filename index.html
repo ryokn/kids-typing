@@ -1320,9 +1320,9 @@ const RANKS = [
 function getRank(xp) { return RANKS.filter(r => xp >= r.xp).pop(); }
 function getXpProg(xp) {
   const idx = RANKS.findIndex(r => r.xp > xp);
-  if (idx === -1) return { pct:100, toNext:0, nextName:'' };
+  if (idx === -1) return { pct:100, toNext:0, nextName:'', nextIcon:'' };
   const cur = RANKS[idx-1].xp, next = RANKS[idx].xp;
-  return { pct:((xp-cur)/(next-cur))*100, toNext:next-xp, nextName:RANKS[idx].name };
+  return { pct:((xp-cur)/(next-cur))*100, toNext:next-xp, nextName:RANKS[idx].name, nextIcon:RANKS[idx].icon };
 }
 
 /* ═══ DATA STORAGE ═══ */
@@ -1561,7 +1561,7 @@ function updateXPBars() {
   document.getElementById('ls-name').textContent=rank.name;
   document.getElementById('ls-xp').textContent=xp+' XP';
   document.getElementById('ls-fill').style.width=prog.pct+'%';
-  document.getElementById('ls-label').textContent=prog.toNext>0?`あと ${prog.toNext} XP で ${prog.nextName}`:'さいきょう！';
+  document.getElementById('ls-label').innerHTML=prog.toNext>0?`あと ${prog.toNext} XP で ${prog.nextIcon}`:'さいきょう！';
   // game mini
   document.getElementById('g-icon').textContent=rank.icon;
   document.getElementById('g-fill').style.width=prog.pct+'%';
