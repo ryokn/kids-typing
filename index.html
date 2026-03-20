@@ -775,7 +775,8 @@ const RMAP = {
   'わ':'wa','を':'wo','ん':'n',
   'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
   'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
-  'だ':'da','で':'de','ど':'do',
+  'だ':'da','ぢ':'di','づ':'du','で':'de','ど':'do',
+  'ー':'-',
   'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
   'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
   // 拗音 (compound kana)
@@ -808,6 +809,8 @@ const RMAP_ALT = {
   'じゃ': ['ja','zya'],
   'じゅ': ['ju','zyu'],
   'じょ': ['jo','zyo'],
+  'づ':   ['du','dzu'],
+  'ぢ':   ['di','dji'],
 };
 function getValids(kana) { return RMAP_ALT[kana] || [RMAP[kana] || '?']; }
 
@@ -2102,7 +2105,7 @@ function quitToLevelSelect() {
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.altKey||e.metaKey||e.repeat) return;
   const gameActive = document.getElementById('game-screen').classList.contains('active');
-  if(gameActive && /^[a-zA-Z]$/.test(e.key)) {
+  if(gameActive && /^[a-zA-Z\-]$/.test(e.key)) {
     // フォーカス中のボタンがあればタイピング入力を無視
     if(document.activeElement && document.activeElement.tagName==='BUTTON') return;
     onInput(e.key);
