@@ -70,6 +70,53 @@
       outline-offset: 3px;
     }
 
+    /* ── 裏モード ── */
+    .ura-access-btn {
+      display:block; margin:14px auto 0; padding:7px 22px;
+      background:#1a1a2e; color:#ff4d4d; border:2px solid #ff4d4d;
+      border-radius:10px; font-size:.8rem; font-weight:900; cursor:pointer;
+      font-family:inherit; letter-spacing:3px; opacity:.5; transition:.2s;
+    }
+    .ura-access-btn:hover, .ura-access-btn:focus-visible { opacity:1; outline-color:#ff4d4d; }
+    #ura-screen { background:#0d0d1a; }
+    #ura-fail-screen { background:#0d0d1a; }
+    .ura-title { font-size:clamp(2rem,6vw,3rem); font-weight:900; color:#ff4d4d;
+      letter-spacing:4px; margin-bottom:4px; text-shadow:0 0 20px rgba(255,77,77,.5); }
+    .ura-subtitle { color:#666; font-size:.9rem; margin-bottom:20px; }
+    .ura-section { background:#1a1a2e; border:2px solid #2a2a3e; border-radius:16px;
+      padding:14px 16px; margin-bottom:12px; width:100%; max-width:520px; }
+    .ura-section-label { color:#888; font-size:.75rem; font-weight:900;
+      letter-spacing:3px; margin-bottom:10px; }
+    .ura-opts { display:flex; flex-wrap:wrap; gap:8px; }
+    .ura-opt { background:#0d0d1a; color:#888; border:2px solid #2a2a3e; border-radius:10px;
+      padding:8px 16px; font-size:.88rem; font-weight:900; cursor:pointer;
+      font-family:inherit; transition:.1s; }
+    .ura-opt:hover, .ura-opt:focus-visible { border-color:#ff4d4d; color:#ff4d4d; }
+    .ura-opt.selected { background:#ff4d4d; color:#fff; border-color:#ff4d4d; }
+    .ura-lv-grid { display:flex; flex-wrap:wrap; gap:6px; }
+    .ura-lv-btn { background:#0d0d1a; color:#666; border:2px solid #2a2a3e;
+      border-radius:8px; padding:6px 12px; font-size:.82rem; font-weight:900;
+      cursor:pointer; font-family:inherit; transition:.1s; }
+    .ura-lv-btn:hover, .ura-lv-btn:focus-visible { border-color:#ff4d4d; color:#ff4d4d; }
+    .ura-lv-btn.selected { background:#ff4d4d; color:#fff; border-color:#ff4d4d; }
+    .ura-hud { display:none; background:#1a1a2e; border:2px solid #ff4d4d;
+      border-radius:12px; padding:8px 18px; margin:4px auto 2px;
+      max-width:420px; flex-direction:row; align-items:center;
+      justify-content:space-between; gap:12px; }
+    .ura-timer-disp { font-size:1.4rem; font-weight:900; color:#ff4d4d;
+      font-variant-numeric:tabular-nums; transition:color .3s; }
+    .ura-timer-disp.warning { color:#ff0000; animation:timerPulse .5s ease-in-out infinite; }
+    .ura-miss-hud { font-size:.95rem; font-weight:900; color:#ff8888; }
+    @keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .ura-fail-icon { font-size:3.5rem; margin:10px 0 4px; }
+    .ura-fail-title { font-size:clamp(1.8rem,5vw,2.8rem); font-weight:900; color:#ff4d4d;
+      letter-spacing:2px; text-shadow:0 0 20px rgba(255,77,77,.4); }
+    .ura-fail-sub { color:#666; font-size:.9rem; margin:6px 0 16px; }
+    .ura-fail-card { background:#1a1a2e; border:2px solid #2a2a3e; border-radius:16px;
+      padding:16px 32px; margin:8px 0; }
+    .ura-fail-num { font-size:2.2rem; font-weight:900; color:#fff; }
+    .ura-fail-lbl { color:#666; font-size:.8rem; margin-top:2px; }
+
     .btn-play {
       background: var(--green);
       box-shadow: 4px 4px 0 var(--green-d), 4px 4px 0 var(--navy);
@@ -655,6 +702,7 @@
   <button class="mode-toggle-btn" id="mode-toggle" onclick="toggleOni()">👹 おにモード OFF（キーボードひょうじあり）</button>
   <div class="level-grid" id="level-grid"></div>
   <button class="btn btn-ghost" onclick="showScreen('start-screen')">← もどる</button>
+  <button class="ura-access-btn" onclick="showUraScreen()">▶ 裏モード</button>
 </div>
 
 <!-- ═══ GAME ═══ -->
@@ -669,6 +717,10 @@
   <div class="timer-row">
     <span class="timer-disp">⏱ <span id="timer-disp">0:00</span></span>
     <span class="best-disp">🏆 <span id="best-disp">--:--</span></span>
+  </div>
+  <div class="ura-hud" id="ura-hud">
+    <div class="ura-timer-disp" id="ura-timer-disp">⏱ --</div>
+    <div class="ura-miss-hud" id="ura-miss-hud">❌ --</div>
   </div>
   <div class="xp-mini">
     <span class="xp-mini-icon" id="g-icon">🐣</span>
@@ -718,6 +770,55 @@
     <button class="btn btn-ghost" onclick="showScreen('level-screen')">📚 レベルえらぶ</button>
     <button class="btn btn-play" onclick="replayLevel()">🔄 もういちど！</button>
     <button class="btn" id="c-gacha-btn" onclick="showScreen('gacha-screen')" style="background:var(--sun);color:var(--navy);box-shadow:4px 4px 0 var(--navy)">🎰 ガチャへ！</button>
+  </div>
+</div>
+
+<!-- ═══ 裏モード設定 ═══ -->
+<div id="ura-screen" class="screen">
+  <div class="ura-title">▶ 裏モード</div>
+  <div class="ura-subtitle">じかん・ミスせいげんで じょうきゅうしゃにちょうせん！</div>
+  <div class="ura-section">
+    <div class="ura-section-label">LEVEL</div>
+    <div class="ura-lv-grid" id="ura-level-opts"></div>
+  </div>
+  <div class="ura-section">
+    <div class="ura-section-label">せいげんじかん</div>
+    <div class="ura-opts" id="ura-time-opts">
+      <button class="ura-opt" onclick="setUraTime(30,this)">30びょう</button>
+      <button class="ura-opt selected" onclick="setUraTime(60,this)">60びょう</button>
+      <button class="ura-opt" onclick="setUraTime(90,this)">90びょう</button>
+      <button class="ura-opt" onclick="setUraTime(120,this)">120びょう</button>
+      <button class="ura-opt" onclick="setUraTime(0,this)">なし</button>
+    </div>
+  </div>
+  <div class="ura-section">
+    <div class="ura-section-label">きょようミスすう</div>
+    <div class="ura-opts" id="ura-miss-opts">
+      <button class="ura-opt" onclick="setUraMiss(0,this)">0かい（かんぺき）</button>
+      <button class="ura-opt selected" onclick="setUraMiss(3,this)">3かい</button>
+      <button class="ura-opt" onclick="setUraMiss(5,this)">5かい</button>
+      <button class="ura-opt" onclick="setUraMiss(10,this)">10かい</button>
+      <button class="ura-opt" onclick="setUraMiss(-1,this)">なし</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+    <button class="btn" style="background:#ff4d4d;box-shadow:4px 4px 0 #990000;color:#fff" onclick="startUraGame()">スタート！</button>
+    <button class="btn btn-ghost" style="color:#888;border-color:#444" onclick="showScreen('level-screen')">← もどる</button>
+  </div>
+</div>
+
+<!-- ═══ 裏モード失敗 ═══ -->
+<div id="ura-fail-screen" class="screen">
+  <div class="ura-fail-icon" id="ura-fail-icon">⏰</div>
+  <div class="ura-fail-title" id="ura-fail-title">タイムオーバー！</div>
+  <div class="ura-fail-sub" id="ura-fail-sub">じかんがきれました</div>
+  <div class="ura-fail-card">
+    <div class="ura-fail-num"><span id="ura-fail-cleared">0</span> / <span id="ura-fail-total">0</span> もん</div>
+    <div class="ura-fail-lbl">クリア</div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
+    <button class="btn" style="background:#ff4d4d;box-shadow:4px 4px 0 #990000;color:#fff" onclick="startUraGame()">もういちど！</button>
+    <button class="btn btn-ghost" style="color:#888;border-color:#444" onclick="exitUraMode()">← もどる</button>
   </div>
 </div>
 
@@ -1622,6 +1723,107 @@ function toggleMute() {
   document.getElementById('mute-btn').textContent = m ? '🔇' : '🔊';
 }
 
+/* ═══ 裏モード ═══ */
+let uraMode = false;
+let uraTimeLimit = 60;   // 0 = なし
+let uraMaxMistakes = 3;  // -1 = なし
+let uraSelectedLevel = 5;
+let uraTimeLeft = 0;
+let uraCountdownId = null;
+
+function showUraScreen() {
+  buildUraLevelGrid();
+  showScreen('ura-screen');
+}
+
+function buildUraLevelGrid() {
+  const el = document.getElementById('ura-level-opts');
+  el.innerHTML = '';
+  for (let lv = 1; lv <= 10; lv++) {
+    const btn = document.createElement('button');
+    btn.className = 'ura-lv-btn' + (lv === uraSelectedLevel ? ' selected' : '');
+    btn.textContent = `Lv.${lv}`;
+    btn.onclick = () => {
+      uraSelectedLevel = lv;
+      el.querySelectorAll('.ura-lv-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    el.appendChild(btn);
+  }
+}
+
+function setUraTime(t, btn) {
+  uraTimeLimit = t;
+  btn.closest('.ura-opts').querySelectorAll('.ura-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function setUraMiss(m, btn) {
+  uraMaxMistakes = m;
+  btn.closest('.ura-opts').querySelectorAll('.ura-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function startUraGame() {
+  uraMode = true;
+  startGame(uraSelectedLevel);
+}
+
+function startUraCountdown() {
+  const hud = document.getElementById('ura-hud');
+  hud.style.display = 'flex';
+  updateUraMissDisplay();
+  if (uraTimeLimit <= 0) {
+    document.getElementById('ura-timer-disp').textContent = '⏱ ∞';
+    return;
+  }
+  uraTimeLeft = uraTimeLimit;
+  renderUraTimer();
+  uraCountdownId = setInterval(() => {
+    uraTimeLeft--;
+    renderUraTimer();
+    if (uraTimeLeft <= 0) { clearInterval(uraCountdownId); uraCountdownId = null; uraFail('time'); }
+  }, 1000);
+}
+
+function renderUraTimer() {
+  const el = document.getElementById('ura-timer-disp');
+  el.textContent = `⏱ ${uraTimeLeft}びょう`;
+  el.className = 'ura-timer-disp' + (uraTimeLeft <= 10 ? ' warning' : '');
+}
+
+function updateUraMissDisplay() {
+  const el = document.getElementById('ura-miss-hud');
+  if (uraMaxMistakes < 0) { el.textContent = '❌ ∞'; return; }
+  const rem = Math.max(0, uraMaxMistakes - totalMistakes);
+  el.textContent = `❌ のこり ${rem}かい`;
+  el.style.color = rem <= 1 ? '#ff2222' : '#ff8888';
+}
+
+function uraFail(reason) {
+  if (!uraMode) return;
+  clearUraTimer();
+  BGM.stop();
+  const cfg = { time: ['⏰','タイムオーバー！','じかんがきれました'], miss: ['💥','ミスオーバー！','ミスがおおすぎます'] };
+  const [icon, title, sub] = cfg[reason];
+  document.getElementById('ura-fail-icon').textContent = icon;
+  document.getElementById('ura-fail-title').textContent = title;
+  document.getElementById('ura-fail-sub').textContent = sub;
+  document.getElementById('ura-fail-cleared').textContent = wIdx;
+  document.getElementById('ura-fail-total').textContent = wordList.length;
+  showScreen('ura-fail-screen');
+}
+
+function clearUraTimer() {
+  if (uraCountdownId) { clearInterval(uraCountdownId); uraCountdownId = null; }
+  document.getElementById('ura-hud').style.display = 'none';
+}
+
+function exitUraMode() {
+  uraMode = false;
+  showScreen('level-screen');
+}
+
 function toggleOni() {
   oniMode = !oniMode;
   const btn = document.getElementById('mode-toggle');
@@ -1677,6 +1879,8 @@ function startGame(lv) {
   initAudio();
   BGM.stop();
   setTimeout(() => BGM.start(lv), 100);
+  clearUraTimer();
+  if (uraMode) setTimeout(startUraCountdown, 150);
 }
 function replayLevel() { startGame(currentLevel); }
 
@@ -1749,6 +1953,10 @@ function onInput(key) {
     const card=document.getElementById('word-card');
     card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
     setTimeout(()=>card.classList.remove('shake'),300);
+    if (uraMode) {
+      updateUraMissDisplay();
+      if (uraMaxMistakes >= 0 && totalMistakes > uraMaxMistakes) { uraFail('miss'); return; }
+    }
   }
 }
 
@@ -1772,6 +1980,8 @@ function showXPPop(xp) {
 function onGameComplete() {
   // タイマー停止・記録チェック
   gameTimeSec = Timer.stop();
+  clearUraTimer();
+  if (uraMode) { roundXP = Math.round(roundXP * 1.5); uraMode = false; } // 裏モードXP1.5倍
   const prevBest = DATA.getBest(currentLevel, oniMode);
   const isRecord = prevBest === null || gameTimeSec < prevBest;
   if (isRecord) DATA.setBest(currentLevel, oniMode, gameTimeSec);
