@@ -261,6 +261,15 @@
     }
     .lc-oni-btn:hover  { background: rgba(200,50,0,.72); }
     .lc-oni-btn:active { background: rgba(200,50,0,.95); }
+    .lc-ura-btn {
+      display: none; width: 100%; padding: 13px 12px; border: none;
+      border-top: 2px solid rgba(255,77,77,.3);
+      background: rgba(255,0,0,.18); color: #ff8888; font-family: inherit;
+      font-size: .9rem; font-weight: 900; cursor: pointer; transition: background .12s;
+      letter-spacing: .5px; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .lc-ura-btn:hover  { background: rgba(255,0,0,.35); color:#fff; }
+    .lc-ura-btn:active { background: rgba(255,0,0,.55); }
     .lc-1 { background: var(--mint); }
     .lc-2 { background: var(--sky); }
     .lc-3 { background: var(--sun); }
@@ -756,6 +765,29 @@
     }
     .ura-tab-btn:hover { opacity:1; background:#2a1a2e; box-shadow:0 0 10px rgba(255,77,77,.4); }
     .ura-tab-btn:active { transform:scale(.96); }
+    .ura-tab-btn.exit { background:#ff4d4d; color:#fff; border-color:#cc0000; animation:uraPulse 1.4s ease-in-out infinite; }
+    .ura-tab-btn.exit:hover { background:#cc0000; }
+    @keyframes uraPulse { 0%,100%{box-shadow:0 0 8px rgba(255,77,77,.4)} 50%{box-shadow:0 0 18px rgba(255,77,77,.9)} }
+
+    /* 裏モード レベル選択ダーク変換 */
+    body.ura-level-mode #level-screen { background:#0a0a14; }
+    body.ura-level-mode .title-big { color:#ff4d4d !important; text-shadow:0 0 20px rgba(255,77,77,.5); }
+    body.ura-level-mode .xp-panel { background:#1a1a2e; border-color:#2a2a3e; }
+    body.ura-level-mode .xp-rank-name, body.ura-level-mode .xp-total, body.ura-level-mode .xp-bar-label { color:#888; }
+    body.ura-level-mode .xp-bar-bg { background:#0d0d1a; border-color:#2a2a3e; }
+    body.ura-level-mode .xp-bar-fill { background:linear-gradient(90deg,#660000,#ff4d4d); }
+    body.ura-level-mode .world-tabs { background:#1a1a2e; border-color:#2a2a3e; }
+    body.ura-level-mode .world-tab { color:#666; }
+    body.ura-level-mode .world-tab.active { background:#ff4d4d; color:#fff; }
+    body.ura-level-mode .level-card { background:#111122 !important; border-color:#2a2a3e !important; box-shadow:4px 4px 0 #000 !important; }
+    body.ura-level-mode .lc-main { color:#ccc; }
+    body.ura-level-mode .lc-num { color:#ff4d4d !important; }
+    body.ura-level-mode .lc-name { color:#fff !important; }
+    body.ura-level-mode .lc-stars { filter:grayscale(1) brightness(.6); }
+    body.ura-level-mode .lc-info, body.ura-level-mode .lc-best { color:#555 !important; }
+    body.ura-level-mode .lc-oni-btn { display:none; }
+    body.ura-level-mode .lc-ura-btn { display:flex !important; }
+    body.ura-level-mode .btn-ghost { color:#666; border-color:#333; }
 
     /* カード内おにモードトグル */
     .lc-oni { position:absolute; inset:0; border-radius:18px; border:3px solid rgba(255,80,0,.8); pointer-events:none; }
@@ -896,7 +928,7 @@
         <span class="world-tab-name">じょうきゅう</span>
       </button>
     </div>
-    <button class="ura-tab-btn" onclick="showUraScreen()">👹<br>裏モード</button>
+    <button class="ura-tab-btn" id="ura-tab-btn" onclick="toggleUraLevelMode()">👹<br>裏モード</button>
   </div>
   <div class="level-grid" id="level-grid"></div>
   <button class="btn btn-ghost" onclick="showScreen('start-screen')">← もどる</button>
@@ -2172,6 +2204,33 @@ function stopUraRain() {
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
+let uraLevelMode = false;
+
+function toggleUraLevelMode() {
+  uraLevelMode = !uraLevelMode;
+  document.body.classList.toggle('ura-level-mode', uraLevelMode);
+  const btn = document.getElementById('ura-tab-btn');
+  if (uraLevelMode) {
+    btn.classList.add('exit');
+    btn.innerHTML = '✕<br>解除する';
+    startUraRain();
+  } else {
+    btn.classList.remove('exit');
+    btn.innerHTML = '👹<br>裏モード';
+    stopUraRain();
+  }
+  buildLevelGrid();
+}
+
+function startUraLevelGame(lv) {
+  uraMode = true;
+  oniMode = true;
+  uraMaxMistakes = 0;
+  uraTimeLimit = URA_TIME[lv] ?? 60;
+  uraSelectedLevel = lv; // 失敗画面のリトライ用
+  startGame(lv);
+}
+
 function showUraScreen() {
   buildUraLevelGrid();
   showScreen('ura-screen');
@@ -2341,8 +2400,13 @@ function buildLevelGrid() {
     onibtn.className = 'lc-oni-btn';
     onibtn.textContent = '👹 おにモードではじめる';
     onibtn.onclick = () => { oniMode = true; startGame(lv); };
+    const urabtn = document.createElement('button');
+    urabtn.className = 'lc-ura-btn';
+    urabtn.innerHTML = `👹 スタート <span style="font-size:.75em;opacity:.7">⏱${URA_TIME[lv]}びょう／ミス0</span>`;
+    urabtn.onclick = () => { startUraLevelGame(lv); };
     card.appendChild(main);
     card.appendChild(onibtn);
+    card.appendChild(urabtn);
     grid.appendChild(card);
   }
 }
@@ -2843,6 +2907,8 @@ function closeConfirm() {
 function quitToLevelSelect() {
   closeConfirm();
   BGM.stop();
+  if (uraMode) { clearUraTimer(); document.body.classList.remove('ura-active'); document.getElementById('ura-hud').style.display='none'; uraMode = false; }
+  oniMode = false;
   showScreen('level-screen');
 }
 
