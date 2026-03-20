@@ -2167,7 +2167,7 @@ function toggleOni() {
 /* ═══ LEVEL GRID ═══ */
 function buildLevelGrid() {
   const grid=document.getElementById('level-grid'); grid.innerHTML='';
-  for (let lv=1; lv<=10; lv++) {
+  for (let lv=1; lv<=12; lv++) {
     const cfg=LEVEL_CFG[lv];
     const xpBase = cfg.xp * (oniMode ? 2 : 1);
     const xpMax  = Math.round(xpBase * 1.5);
