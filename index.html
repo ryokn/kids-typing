@@ -1307,11 +1307,15 @@ const LEVEL_CFG = {
 /* ═══ RANK DATA ═══ */
 const RANKS = [
   { name:'ひよこ',      icon:'🐣', xp:0    },
-  { name:'こねこ',      icon:'🐱', xp:150  },
-  { name:'こぎつね',    icon:'🦊', xp:400  },
-  { name:'たぬき',      icon:'🦝', xp:800  },
-  { name:'らいおん',    icon:'🦁', xp:1500 },
-  { name:'チャンピオン',icon:'🏆', xp:2800 },
+  { name:'ひなどり',    icon:'🐥', xp:60   },
+  { name:'うさぎ',      icon:'🐰', xp:150  },
+  { name:'こぎつね',    icon:'🦊', xp:350  },
+  { name:'こいぬ',      icon:'🐶', xp:650  },
+  { name:'たぬき',      icon:'🦝', xp:1100 },
+  { name:'とら',        icon:'🐯', xp:1700 },
+  { name:'らいおん',    icon:'🦁', xp:2200 },
+  { name:'ドラゴン',    icon:'🐉', xp:2900 },
+  { name:'チャンピオン',icon:'🏆', xp:3500 },
 ];
 function getRank(xp) { return RANKS.filter(r => xp >= r.xp).pop(); }
 function getXpProg(xp) {
