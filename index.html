@@ -1119,6 +1119,7 @@ const RMAP_ALT = {
   'じょ': ['jo','zyo'],
   'づ':   ['du','dzu'],
   'ぢ':   ['di','dji'],
+  'ん':   ['nn','n'],
 };
 function getValids(kana) { return RMAP_ALT[kana] || [RMAP[kana] || '?']; }
 
@@ -2436,12 +2437,22 @@ function onInput(key) {
   if (matched.length>0) {
     sfxKey(); flashKey(key,'ok');
     typed=candidate;
-    if (u.valids.includes(candidate)) { // いずれかの候補と完全一致 → 次の文字へ
+    const isComplete = u.valids.includes(candidate);
+    // 完全一致でも、より長い候補のプレフィックスになっている場合は遅延確定（nn対応）
+    const hasLonger = u.valids.some(v=>v.startsWith(candidate) && v.length>candidate.length);
+    const isLastUnit = uIdx+1>=units.length;
+    if (isComplete && (!hasLonger || isLastUnit)) { // 次の文字へ
       uIdx++; typed='';
       if (uIdx>=units.length) { onWordDone(); return; }
     }
     renderWord();
   } else {
+    // 遅延確定: 現在のtypedが完全一致だった場合、確定してから新キーを再処理
+    if (typed.length>0 && u.valids.includes(typed)) {
+      uIdx++; typed='';
+      if (uIdx>=units.length) { onWordDone(); return; }
+      onInput(key); return;
+    }
     sfxWrong(); flashKey(key,'ng'); wordMistakes++; totalMistakes++;
     const card=document.getElementById('word-card');
     card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
